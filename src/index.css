@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Design tokens.
+   The lesson is dark-only by design decision (PROGETTO.md §8 puts dark mode
+   out of scope — this *is* the mode, there is no other to toggle to).
+   --------------------------------------------------------------------------- */
+/* `static` matters: Tailwind v4 drops theme variables no utility class
+   references, and the page colours are only ever read through var() from
+   inline styles, so without it they resolve to nothing. */
+@theme static {
+  --color-ground: oklch(0.17 0.012 260);
+  --color-surface: oklch(0.22 0.014 260);
+  --color-surface-hi: oklch(0.27 0.016 260);
+  --color-edge: oklch(0.34 0.018 260);
+  --color-ink: oklch(0.94 0.005 260);
+  --color-ink-dim: oklch(0.68 0.012 260);
+  --color-ink-faint: oklch(0.48 0.014 260);
+
+  --color-hit: oklch(0.76 0.17 150);
+  --color-fault: oklch(0.70 0.19 25);
+  --color-focus: oklch(0.80 0.15 85);
+  /* Key terms in the voice. Deliberately outside the page hues so a bolded
+     word is never mistaken for a page identity. */
+  --color-key: oklch(0.86 0.09 210);
+
+  /* Page identity colours. Six distinct hues; the page number is always
+     printed on top, so nothing is encoded in colour alone. */
+  --color-page-1: oklch(0.72 0.14 20);
+  --color-page-2: oklch(0.74 0.13 60);
+  --color-page-3: oklch(0.76 0.13 115);
+  --color-page-4: oklch(0.72 0.12 175);
+  --color-page-5: oklch(0.68 0.13 250);
+  --color-page-6: oklch(0.70 0.14 310);
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
+html {
+  background: var(--color-ground);
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  /* The lesson is one screen at a time; the page itself never scrolls
+     horizontally and rarely vertically. */
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+}
+
+/* The machine portrait is pixel art at integer scale. Never smooth it. */
+.pixelated {
+  image-rendering: pixelated;
+}
+
+/* Every motion in this lesson carries meaning (a tape moving, a tile leaving,
+   a mask dissolving), so reduced motion shortens rather than removes it. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* The tape's geometry. --pitch is one cell plus its gap; --tape-anchor is where
+   the marker sits, so the strip translates by -cursor * pitch to run under it. */
+.tape {
+  --pitch: 2.75rem;
+  /* The anchor is where the marker sits, so it also decides how much history
+     stays on screen: the strip translates by -cursor * pitch, and everything
+     left of the anchor is clipped. The lesson tells the learner to read the
+     past, so the past has to be there — three cells back on a phone, four on
+     a wider screen. */
+  --tape-anchor: calc(var(--pitch) * 3);
+}
+@media (min-width: 640px) {
+  .tape {
+    --pitch: 3.25rem;
+    --tape-anchor: calc(var(--pitch) * 4);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The masked future, drawing attention to itself while the voice explains that
+   nobody gets to see it. The storyboard always called for this; without it the
+   line is text, with it the line is a caption. */
+@keyframes mask-pulse {
+  0%,
+  100% {
+    border-color: var(--color-edge);
+    background: var(--color-surface);
+  }
+  50% {
+    border-color: var(--color-focus);
+    background: var(--color-surface-hi);
+  }
+}

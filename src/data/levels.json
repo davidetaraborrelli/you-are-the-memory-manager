@@ -1,0 +1,3595 @@
+{
+ "generatedBy": "tools/gen_levels.py - do not edit by hand",
+ "levels": {
+  "l1": {
+   "name": "l1",
+   "title": "Playing blind",
+   "ref": [
+    1,
+    2,
+    3,
+    1,
+    4,
+    1,
+    1,
+    2,
+    4,
+    3,
+    2,
+    2,
+    4,
+    3
+   ],
+   "frames": 3,
+   "pages": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "length": 14,
+   "scores": {
+    "fifo": 8,
+    "lru": 6,
+    "lfu": 9,
+    "clock": 8,
+    "opt": 5,
+    "clockNoHand": 9,
+    "clearAll": 8,
+    "randomAvg": 6.6
+   },
+   "traces": {
+    "fifo": [
+     {
+      "step": 1,
+      "page": 1,
+      "outcome": "fill",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       null,
+       null
+      ]
+     },
+     {
+      "step": 2,
+      "page": 2,
+      "outcome": "fill",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       null
+      ]
+     },
+     {
+      "step": 3,
+      "page": 3,
+      "outcome": "fill",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       3
+      ]
+     },
+     {
+      "step": 4,
+      "page": 1,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       3
+      ]
+     },
+     {
+      "step": 5,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 1,
+      "frames": [
+       4,
+       2,
+       3
+      ]
+     },
+     {
+      "step": 6,
+      "page": 1,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 2,
+      "frames": [
+       4,
+       1,
+       3
+      ]
+     },
+     {
+      "step": 7,
+      "page": 1,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       4,
+       1,
+       3
+      ]
+     },
+     {
+      "step": 8,
+      "page": 2,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 3,
+      "frames": [
+       4,
+       1,
+       2
+      ]
+     },
+     {
+      "step": 9,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       4,
+       1,
+       2
+      ]
+     },
+     {
+      "step": 10,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 4,
+      "frames": [
+       3,
+       1,
+       2
+      ]
+     },
+     {
+      "step": 11,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       3,
+       1,
+       2
+      ]
+     },
+     {
+      "step": 12,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       3,
+       1,
+       2
+      ]
+     },
+     {
+      "step": 13,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 1,
+      "frames": [
+       3,
+       4,
+       2
+      ]
+     },
+     {
+      "step": 14,
+      "page": 3,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       3,
+       4,
+       2
+      ]
+     }
+    ],
+    "lru": [
+     {
+      "step": 1,
+      "page": 1,
+      "outcome": "fill",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       null,
+       null
+      ]
+     },
+     {
+      "step": 2,
+      "page": 2,
+      "outcome": "fill",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       null
+      ]
+     },
+     {
+      "step": 3,
+      "page": 3,
+      "outcome": "fill",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       3
+      ]
+     },
+     {
+      "step": 4,
+      "page": 1,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       3
+      ]
+     },
+     {
+      "step": 5,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 2,
+      "frames": [
+       1,
+       4,
+       3
+      ]
+     },
+     {
+      "step": 6,
+      "page": 1,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       4,
+       3
+      ]
+     },
+     {
+      "step": 7,
+      "page": 1,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       4,
+       3
+      ]
+     },
+     {
+      "step": 8,
+      "page": 2,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 3,
+      "frames": [
+       1,
+       4,
+       2
+      ]
+     },
+     {
+      "step": 9,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       1,
+       4,
+       2
+      ]
+     },
+     {
+      "step": 10,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 1,
+      "frames": [
+       3,
+       4,
+       2
+      ]
+     },
+     {
+      "step": 11,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       3,
+       4,
+       2
+      ]
+     },
+     {
+      "step": 12,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       3,
+       4,
+       2
+      ]
+     },
+     {
+      "step": 13,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       3,
+       4,
+       2
+      ]
+     },
+     {
+      "step": 14,
+      "page": 3,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       3,
+       4,
+       2
+      ]
+     }
+    ],
+    "opt": [
+     {
+      "step": 1,
+      "page": 1,
+      "outcome": "fill",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       null,
+       null
+      ]
+     },
+     {
+      "step": 2,
+      "page": 2,
+      "outcome": "fill",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       null
+      ]
+     },
+     {
+      "step": 3,
+      "page": 3,
+      "outcome": "fill",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       3
+      ]
+     },
+     {
+      "step": 4,
+      "page": 1,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       3
+      ]
+     },
+     {
+      "step": 5,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 3,
+      "frames": [
+       1,
+       2,
+       4
+      ],
+      "victim_next_use": 10
+     },
+     {
+      "step": 6,
+      "page": 1,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 7,
+      "page": 1,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 8,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 9,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       1,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 10,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 1,
+      "frames": [
+       3,
+       2,
+       4
+      ],
+      "victim_next_use": null
+     },
+     {
+      "step": 11,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       3,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 12,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       3,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 13,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       3,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 14,
+      "page": 3,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       3,
+       2,
+       4
+      ]
+     }
+    ]
+   }
+  },
+  "l2": {
+   "name": "l2",
+   "title": "Recency gets easy",
+   "ref": [
+    2,
+    6,
+    6,
+    1,
+    6,
+    2,
+    4,
+    2,
+    4,
+    6,
+    4,
+    2,
+    5,
+    4,
+    5,
+    4,
+    2,
+    3
+   ],
+   "frames": 3,
+   "pages": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "length": 18,
+   "scores": {
+    "fifo": 10,
+    "lru": 6,
+    "lfu": 8,
+    "clock": 10,
+    "opt": 6,
+    "clockNoHand": 10,
+    "clearAll": 10,
+    "randomAvg": 8.4
+   },
+   "traces": {
+    "fifo": [
+     {
+      "step": 1,
+      "page": 2,
+      "outcome": "fill",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       null,
+       null
+      ]
+     },
+     {
+      "step": 2,
+      "page": 6,
+      "outcome": "fill",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       null
+      ]
+     },
+     {
+      "step": 3,
+      "page": 6,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       null
+      ]
+     },
+     {
+      "step": 4,
+      "page": 1,
+      "outcome": "fill",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       1
+      ]
+     },
+     {
+      "step": 5,
+      "page": 6,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       1
+      ]
+     },
+     {
+      "step": 6,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       1
+      ]
+     },
+     {
+      "step": 7,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 2,
+      "frames": [
+       4,
+       6,
+       1
+      ]
+     },
+     {
+      "step": 8,
+      "page": 2,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 6,
+      "frames": [
+       4,
+       2,
+       1
+      ]
+     },
+     {
+      "step": 9,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       4,
+       2,
+       1
+      ]
+     },
+     {
+      "step": 10,
+      "page": 6,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 1,
+      "frames": [
+       4,
+       2,
+       6
+      ]
+     },
+     {
+      "step": 11,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       4,
+       2,
+       6
+      ]
+     },
+     {
+      "step": 12,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       4,
+       2,
+       6
+      ]
+     },
+     {
+      "step": 13,
+      "page": 5,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 4,
+      "frames": [
+       5,
+       2,
+       6
+      ]
+     },
+     {
+      "step": 14,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 2,
+      "frames": [
+       5,
+       4,
+       6
+      ]
+     },
+     {
+      "step": 15,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       5,
+       4,
+       6
+      ]
+     },
+     {
+      "step": 16,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       5,
+       4,
+       6
+      ]
+     },
+     {
+      "step": 17,
+      "page": 2,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 6,
+      "frames": [
+       5,
+       4,
+       2
+      ]
+     },
+     {
+      "step": 18,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 5,
+      "frames": [
+       3,
+       4,
+       2
+      ]
+     }
+    ],
+    "lru": [
+     {
+      "step": 1,
+      "page": 2,
+      "outcome": "fill",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       null,
+       null
+      ]
+     },
+     {
+      "step": 2,
+      "page": 6,
+      "outcome": "fill",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       null
+      ]
+     },
+     {
+      "step": 3,
+      "page": 6,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       null
+      ]
+     },
+     {
+      "step": 4,
+      "page": 1,
+      "outcome": "fill",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       1
+      ]
+     },
+     {
+      "step": 5,
+      "page": 6,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       1
+      ]
+     },
+     {
+      "step": 6,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       1
+      ]
+     },
+     {
+      "step": 7,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 1,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 8,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 9,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 10,
+      "page": 6,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 11,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 12,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 13,
+      "page": 5,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 6,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 14,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 15,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 16,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 17,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 18,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 5,
+      "frames": [
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "opt": [
+     {
+      "step": 1,
+      "page": 2,
+      "outcome": "fill",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       null,
+       null
+      ]
+     },
+     {
+      "step": 2,
+      "page": 6,
+      "outcome": "fill",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       null
+      ]
+     },
+     {
+      "step": 3,
+      "page": 6,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       null
+      ]
+     },
+     {
+      "step": 4,
+      "page": 1,
+      "outcome": "fill",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       1
+      ]
+     },
+     {
+      "step": 5,
+      "page": 6,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       1
+      ]
+     },
+     {
+      "step": 6,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       1
+      ]
+     },
+     {
+      "step": 7,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 1,
+      "frames": [
+       2,
+       6,
+       4
+      ],
+      "victim_next_use": null
+     },
+     {
+      "step": 8,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 9,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 10,
+      "page": 6,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 11,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 12,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       6,
+       4
+      ]
+     },
+     {
+      "step": 13,
+      "page": 5,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 6,
+      "frames": [
+       2,
+       5,
+       4
+      ],
+      "victim_next_use": null
+     },
+     {
+      "step": 14,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 15,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 16,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 17,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 18,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 2,
+      "frames": [
+       3,
+       5,
+       4
+      ],
+      "victim_next_use": null
+     }
+    ]
+   }
+  },
+  "l3": {
+   "name": "l3",
+   "title": "One bit per page",
+   "ref": [
+    1,
+    3,
+    2,
+    5,
+    3,
+    4,
+    3,
+    5,
+    4,
+    2,
+    5,
+    5,
+    4,
+    4,
+    3,
+    2
+   ],
+   "frames": 3,
+   "pages": [
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "length": 16,
+   "scores": {
+    "fifo": 11,
+    "lru": 8,
+    "lfu": 9,
+    "clock": 8,
+    "opt": 7,
+    "clockNoHand": 9,
+    "clearAll": 9,
+    "randomAvg": 9.1
+   },
+   "traces": {
+    "fifo": [
+     {
+      "step": 1,
+      "page": 1,
+      "outcome": "fill",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       null,
+       null
+      ]
+     },
+     {
+      "step": 2,
+      "page": 3,
+      "outcome": "fill",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       1,
+       3,
+       null
+      ]
+     },
+     {
+      "step": 3,
+      "page": 2,
+      "outcome": "fill",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       1,
+       3,
+       2
+      ]
+     },
+     {
+      "step": 4,
+      "page": 5,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 1,
+      "frames": [
+       5,
+       3,
+       2
+      ]
+     },
+     {
+      "step": 5,
+      "page": 3,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       2
+      ]
+     },
+     {
+      "step": 6,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 3,
+      "frames": [
+       5,
+       4,
+       2
+      ]
+     },
+     {
+      "step": 7,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 2,
+      "frames": [
+       5,
+       4,
+       3
+      ]
+     },
+     {
+      "step": 8,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       5,
+       4,
+       3
+      ]
+     },
+     {
+      "step": 9,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       5,
+       4,
+       3
+      ]
+     },
+     {
+      "step": 10,
+      "page": 2,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 5,
+      "frames": [
+       2,
+       4,
+       3
+      ]
+     },
+     {
+      "step": 11,
+      "page": 5,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 4,
+      "frames": [
+       2,
+       5,
+       3
+      ]
+     },
+     {
+      "step": 12,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       3
+      ]
+     },
+     {
+      "step": 13,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 3,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 14,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 15,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 2,
+      "frames": [
+       3,
+       5,
+       4
+      ]
+     },
+     {
+      "step": 16,
+      "page": 2,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 5,
+      "frames": [
+       3,
+       2,
+       4
+      ]
+     }
+    ],
+    "lru": [
+     {
+      "step": 1,
+      "page": 1,
+      "outcome": "fill",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       null,
+       null
+      ]
+     },
+     {
+      "step": 2,
+      "page": 3,
+      "outcome": "fill",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       1,
+       3,
+       null
+      ]
+     },
+     {
+      "step": 3,
+      "page": 2,
+      "outcome": "fill",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       1,
+       3,
+       2
+      ]
+     },
+     {
+      "step": 4,
+      "page": 5,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 1,
+      "frames": [
+       5,
+       3,
+       2
+      ]
+     },
+     {
+      "step": 5,
+      "page": 3,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       2
+      ]
+     },
+     {
+      "step": 6,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 2,
+      "frames": [
+       5,
+       3,
+       4
+      ]
+     },
+     {
+      "step": 7,
+      "page": 3,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       4
+      ]
+     },
+     {
+      "step": 8,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       4
+      ]
+     },
+     {
+      "step": 9,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       4
+      ]
+     },
+     {
+      "step": 10,
+      "page": 2,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 3,
+      "frames": [
+       5,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 11,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       5,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 12,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       5,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 13,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       5,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 14,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       5,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 15,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 2,
+      "frames": [
+       5,
+       3,
+       4
+      ]
+     },
+     {
+      "step": 16,
+      "page": 2,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 5,
+      "frames": [
+       2,
+       3,
+       4
+      ]
+     }
+    ],
+    "clock": [
+     {
+      "step": 1,
+      "page": 1,
+      "outcome": "fill",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       null,
+       null
+      ],
+      "bits": [
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "step": 2,
+      "page": 3,
+      "outcome": "fill",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       1,
+       3,
+       null
+      ],
+      "bits": [
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "step": 3,
+      "page": 2,
+      "outcome": "fill",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       1,
+       3,
+       2
+      ],
+      "bits": [
+       1,
+       1,
+       1
+      ]
+     },
+     {
+      "step": 4,
+      "page": 5,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 1,
+      "frames": [
+       5,
+       3,
+       2
+      ],
+      "bits": [
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "step": 5,
+      "page": 3,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       2
+      ],
+      "bits": [
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "step": 6,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 2,
+      "frames": [
+       5,
+       3,
+       4
+      ],
+      "bits": [
+       1,
+       0,
+       1
+      ]
+     },
+     {
+      "step": 7,
+      "page": 3,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       4
+      ],
+      "bits": [
+       1,
+       1,
+       1
+      ]
+     },
+     {
+      "step": 8,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       4
+      ],
+      "bits": [
+       1,
+       1,
+       1
+      ]
+     },
+     {
+      "step": 9,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       4
+      ],
+      "bits": [
+       1,
+       1,
+       1
+      ]
+     },
+     {
+      "step": 10,
+      "page": 2,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 5,
+      "frames": [
+       2,
+       3,
+       4
+      ],
+      "bits": [
+       1,
+       0,
+       0
+      ]
+     },
+     {
+      "step": 11,
+      "page": 5,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 3,
+      "frames": [
+       2,
+       5,
+       4
+      ],
+      "bits": [
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "step": 12,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ],
+      "bits": [
+       1,
+       1,
+       0
+      ]
+     },
+     {
+      "step": 13,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ],
+      "bits": [
+       1,
+       1,
+       1
+      ]
+     },
+     {
+      "step": 14,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       4
+      ],
+      "bits": [
+       1,
+       1,
+       1
+      ]
+     },
+     {
+      "step": 15,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 4,
+      "frames": [
+       2,
+       5,
+       3
+      ],
+      "bits": [
+       0,
+       0,
+       1
+      ]
+     },
+     {
+      "step": 16,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       2,
+       5,
+       3
+      ],
+      "bits": [
+       1,
+       0,
+       1
+      ]
+     }
+    ],
+    "opt": [
+     {
+      "step": 1,
+      "page": 1,
+      "outcome": "fill",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       1,
+       null,
+       null
+      ]
+     },
+     {
+      "step": 2,
+      "page": 3,
+      "outcome": "fill",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       1,
+       3,
+       null
+      ]
+     },
+     {
+      "step": 3,
+      "page": 2,
+      "outcome": "fill",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       1,
+       3,
+       2
+      ]
+     },
+     {
+      "step": 4,
+      "page": 5,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 1,
+      "frames": [
+       5,
+       3,
+       2
+      ],
+      "victim_next_use": null
+     },
+     {
+      "step": 5,
+      "page": 3,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       2
+      ]
+     },
+     {
+      "step": 6,
+      "page": 4,
+      "outcome": "evict",
+      "slot": 2,
+      "victim": 2,
+      "frames": [
+       5,
+       3,
+       4
+      ],
+      "victim_next_use": 10
+     },
+     {
+      "step": 7,
+      "page": 3,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       4
+      ]
+     },
+     {
+      "step": 8,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       4
+      ]
+     },
+     {
+      "step": 9,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       5,
+       3,
+       4
+      ]
+     },
+     {
+      "step": 10,
+      "page": 2,
+      "outcome": "evict",
+      "slot": 1,
+      "victim": 3,
+      "frames": [
+       5,
+       2,
+       4
+      ],
+      "victim_next_use": 15
+     },
+     {
+      "step": 11,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       5,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 12,
+      "page": 5,
+      "outcome": "hit",
+      "slot": 0,
+      "victim": null,
+      "frames": [
+       5,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 13,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       5,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 14,
+      "page": 4,
+      "outcome": "hit",
+      "slot": 2,
+      "victim": null,
+      "frames": [
+       5,
+       2,
+       4
+      ]
+     },
+     {
+      "step": 15,
+      "page": 3,
+      "outcome": "evict",
+      "slot": 0,
+      "victim": 5,
+      "frames": [
+       3,
+       2,
+       4
+      ],
+      "victim_next_use": null
+     },
+     {
+      "step": 16,
+      "page": 2,
+      "outcome": "hit",
+      "slot": 1,
+      "victim": null,
+      "frames": [
+       3,
+       2,
+       4
+      ]
+     }
+    ]
+   }
+  }
+ },
+ "belady": {
+  "ref": [
+   1,
+   2,
+   3,
+   4,
+   1,
+   2,
+   5,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "pages": [
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "length": 12,
+  "runs": {
+   "clock": {
+    "small": {
+     "frames": 3,
+     "faults": 9,
+     "steps": [
+      {
+       "step": 1,
+       "page": 1,
+       "outcome": "fill",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        null,
+        null
+       ],
+       "bits": [
+        1,
+        0,
+        0
+       ]
+      },
+      {
+       "step": 2,
+       "page": 2,
+       "outcome": "fill",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        null
+       ],
+       "bits": [
+        1,
+        1,
+        0
+       ]
+      },
+      {
+       "step": 3,
+       "page": 3,
+       "outcome": "fill",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3
+       ],
+       "bits": [
+        1,
+        1,
+        1
+       ]
+      },
+      {
+       "step": 4,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 1,
+       "frames": [
+        4,
+        2,
+        3
+       ],
+       "bits": [
+        1,
+        0,
+        0
+       ]
+      },
+      {
+       "step": 5,
+       "page": 1,
+       "outcome": "evict",
+       "slot": 1,
+       "victim": 2,
+       "frames": [
+        4,
+        1,
+        3
+       ],
+       "bits": [
+        1,
+        1,
+        0
+       ]
+      },
+      {
+       "step": 6,
+       "page": 2,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 3,
+       "frames": [
+        4,
+        1,
+        2
+       ],
+       "bits": [
+        1,
+        1,
+        1
+       ]
+      },
+      {
+       "step": 7,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 4,
+       "frames": [
+        5,
+        1,
+        2
+       ],
+       "bits": [
+        1,
+        0,
+        0
+       ]
+      },
+      {
+       "step": 8,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        5,
+        1,
+        2
+       ],
+       "bits": [
+        1,
+        1,
+        0
+       ]
+      },
+      {
+       "step": 9,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        5,
+        1,
+        2
+       ],
+       "bits": [
+        1,
+        1,
+        1
+       ]
+      },
+      {
+       "step": 10,
+       "page": 3,
+       "outcome": "evict",
+       "slot": 1,
+       "victim": 1,
+       "frames": [
+        5,
+        3,
+        2
+       ],
+       "bits": [
+        0,
+        1,
+        0
+       ]
+      },
+      {
+       "step": 11,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 2,
+       "frames": [
+        5,
+        3,
+        4
+       ],
+       "bits": [
+        0,
+        1,
+        1
+       ]
+      },
+      {
+       "step": 12,
+       "page": 5,
+       "outcome": "hit",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        5,
+        3,
+        4
+       ],
+       "bits": [
+        1,
+        1,
+        1
+       ]
+      }
+     ]
+    },
+    "big": {
+     "frames": 4,
+     "faults": 10,
+     "steps": [
+      {
+       "step": 1,
+       "page": 1,
+       "outcome": "fill",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        null,
+        null,
+        null
+       ],
+       "bits": [
+        1,
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "step": 2,
+       "page": 2,
+       "outcome": "fill",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        null,
+        null
+       ],
+       "bits": [
+        1,
+        1,
+        0,
+        0
+       ]
+      },
+      {
+       "step": 3,
+       "page": 3,
+       "outcome": "fill",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        null
+       ],
+       "bits": [
+        1,
+        1,
+        1,
+        0
+       ]
+      },
+      {
+       "step": 4,
+       "page": 4,
+       "outcome": "fill",
+       "slot": 3,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ],
+       "bits": [
+        1,
+        1,
+        1,
+        1
+       ]
+      },
+      {
+       "step": 5,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ],
+       "bits": [
+        1,
+        1,
+        1,
+        1
+       ]
+      },
+      {
+       "step": 6,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ],
+       "bits": [
+        1,
+        1,
+        1,
+        1
+       ]
+      },
+      {
+       "step": 7,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 1,
+       "frames": [
+        5,
+        2,
+        3,
+        4
+       ],
+       "bits": [
+        1,
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "step": 8,
+       "page": 1,
+       "outcome": "evict",
+       "slot": 1,
+       "victim": 2,
+       "frames": [
+        5,
+        1,
+        3,
+        4
+       ],
+       "bits": [
+        1,
+        1,
+        0,
+        0
+       ]
+      },
+      {
+       "step": 9,
+       "page": 2,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 3,
+       "frames": [
+        5,
+        1,
+        2,
+        4
+       ],
+       "bits": [
+        1,
+        1,
+        1,
+        0
+       ]
+      },
+      {
+       "step": 10,
+       "page": 3,
+       "outcome": "evict",
+       "slot": 3,
+       "victim": 4,
+       "frames": [
+        5,
+        1,
+        2,
+        3
+       ],
+       "bits": [
+        1,
+        1,
+        1,
+        1
+       ]
+      },
+      {
+       "step": 11,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 5,
+       "frames": [
+        4,
+        1,
+        2,
+        3
+       ],
+       "bits": [
+        1,
+        0,
+        0,
+        0
+       ]
+      },
+      {
+       "step": 12,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 1,
+       "victim": 1,
+       "frames": [
+        4,
+        5,
+        2,
+        3
+       ],
+       "bits": [
+        1,
+        1,
+        0,
+        0
+       ]
+      }
+     ]
+    },
+    "leakSteps": [
+     7,
+     8,
+     11
+    ]
+   },
+   "lru": {
+    "small": {
+     "frames": 3,
+     "faults": 10,
+     "steps": [
+      {
+       "step": 1,
+       "page": 1,
+       "outcome": "fill",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        null,
+        null
+       ]
+      },
+      {
+       "step": 2,
+       "page": 2,
+       "outcome": "fill",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        null
+       ]
+      },
+      {
+       "step": 3,
+       "page": 3,
+       "outcome": "fill",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3
+       ]
+      },
+      {
+       "step": 4,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 1,
+       "frames": [
+        4,
+        2,
+        3
+       ]
+      },
+      {
+       "step": 5,
+       "page": 1,
+       "outcome": "evict",
+       "slot": 1,
+       "victim": 2,
+       "frames": [
+        4,
+        1,
+        3
+       ]
+      },
+      {
+       "step": 6,
+       "page": 2,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 3,
+       "frames": [
+        4,
+        1,
+        2
+       ]
+      },
+      {
+       "step": 7,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 4,
+       "frames": [
+        5,
+        1,
+        2
+       ]
+      },
+      {
+       "step": 8,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        5,
+        1,
+        2
+       ]
+      },
+      {
+       "step": 9,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        5,
+        1,
+        2
+       ]
+      },
+      {
+       "step": 10,
+       "page": 3,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 5,
+       "frames": [
+        3,
+        1,
+        2
+       ]
+      },
+      {
+       "step": 11,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 1,
+       "victim": 1,
+       "frames": [
+        3,
+        4,
+        2
+       ]
+      },
+      {
+       "step": 12,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 2,
+       "frames": [
+        3,
+        4,
+        5
+       ]
+      }
+     ]
+    },
+    "big": {
+     "frames": 4,
+     "faults": 8,
+     "steps": [
+      {
+       "step": 1,
+       "page": 1,
+       "outcome": "fill",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        null,
+        null,
+        null
+       ]
+      },
+      {
+       "step": 2,
+       "page": 2,
+       "outcome": "fill",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        null,
+        null
+       ]
+      },
+      {
+       "step": 3,
+       "page": 3,
+       "outcome": "fill",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        null
+       ]
+      },
+      {
+       "step": 4,
+       "page": 4,
+       "outcome": "fill",
+       "slot": 3,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 5,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 6,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 7,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 3,
+       "frames": [
+        1,
+        2,
+        5,
+        4
+       ]
+      },
+      {
+       "step": 8,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        5,
+        4
+       ]
+      },
+      {
+       "step": 9,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        5,
+        4
+       ]
+      },
+      {
+       "step": 10,
+       "page": 3,
+       "outcome": "evict",
+       "slot": 3,
+       "victim": 4,
+       "frames": [
+        1,
+        2,
+        5,
+        3
+       ]
+      },
+      {
+       "step": 11,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 5,
+       "frames": [
+        1,
+        2,
+        4,
+        3
+       ]
+      },
+      {
+       "step": 12,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 1,
+       "frames": [
+        5,
+        2,
+        4,
+        3
+       ]
+      }
+     ]
+    },
+    "leakSteps": []
+   },
+   "fifo": {
+    "small": {
+     "frames": 3,
+     "faults": 9,
+     "steps": [
+      {
+       "step": 1,
+       "page": 1,
+       "outcome": "fill",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        null,
+        null
+       ]
+      },
+      {
+       "step": 2,
+       "page": 2,
+       "outcome": "fill",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        null
+       ]
+      },
+      {
+       "step": 3,
+       "page": 3,
+       "outcome": "fill",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3
+       ]
+      },
+      {
+       "step": 4,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 1,
+       "frames": [
+        4,
+        2,
+        3
+       ]
+      },
+      {
+       "step": 5,
+       "page": 1,
+       "outcome": "evict",
+       "slot": 1,
+       "victim": 2,
+       "frames": [
+        4,
+        1,
+        3
+       ]
+      },
+      {
+       "step": 6,
+       "page": 2,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 3,
+       "frames": [
+        4,
+        1,
+        2
+       ]
+      },
+      {
+       "step": 7,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 4,
+       "frames": [
+        5,
+        1,
+        2
+       ]
+      },
+      {
+       "step": 8,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        5,
+        1,
+        2
+       ]
+      },
+      {
+       "step": 9,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        5,
+        1,
+        2
+       ]
+      },
+      {
+       "step": 10,
+       "page": 3,
+       "outcome": "evict",
+       "slot": 1,
+       "victim": 1,
+       "frames": [
+        5,
+        3,
+        2
+       ]
+      },
+      {
+       "step": 11,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 2,
+       "frames": [
+        5,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 12,
+       "page": 5,
+       "outcome": "hit",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        5,
+        3,
+        4
+       ]
+      }
+     ]
+    },
+    "big": {
+     "frames": 4,
+     "faults": 10,
+     "steps": [
+      {
+       "step": 1,
+       "page": 1,
+       "outcome": "fill",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        null,
+        null,
+        null
+       ]
+      },
+      {
+       "step": 2,
+       "page": 2,
+       "outcome": "fill",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        null,
+        null
+       ]
+      },
+      {
+       "step": 3,
+       "page": 3,
+       "outcome": "fill",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        null
+       ]
+      },
+      {
+       "step": 4,
+       "page": 4,
+       "outcome": "fill",
+       "slot": 3,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 5,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 6,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 7,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 1,
+       "frames": [
+        5,
+        2,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 8,
+       "page": 1,
+       "outcome": "evict",
+       "slot": 1,
+       "victim": 2,
+       "frames": [
+        5,
+        1,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 9,
+       "page": 2,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 3,
+       "frames": [
+        5,
+        1,
+        2,
+        4
+       ]
+      },
+      {
+       "step": 10,
+       "page": 3,
+       "outcome": "evict",
+       "slot": 3,
+       "victim": 4,
+       "frames": [
+        5,
+        1,
+        2,
+        3
+       ]
+      },
+      {
+       "step": 11,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 5,
+       "frames": [
+        4,
+        1,
+        2,
+        3
+       ]
+      },
+      {
+       "step": 12,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 1,
+       "victim": 1,
+       "frames": [
+        4,
+        5,
+        2,
+        3
+       ]
+      }
+     ]
+    },
+    "leakSteps": [
+     7,
+     8,
+     11
+    ]
+   },
+   "opt": {
+    "small": {
+     "frames": 3,
+     "faults": 7,
+     "steps": [
+      {
+       "step": 1,
+       "page": 1,
+       "outcome": "fill",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        null,
+        null
+       ]
+      },
+      {
+       "step": 2,
+       "page": 2,
+       "outcome": "fill",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        null
+       ]
+      },
+      {
+       "step": 3,
+       "page": 3,
+       "outcome": "fill",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3
+       ]
+      },
+      {
+       "step": 4,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 3,
+       "frames": [
+        1,
+        2,
+        4
+       ],
+       "victim_next_use": 10
+      },
+      {
+       "step": 5,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        4
+       ]
+      },
+      {
+       "step": 6,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        4
+       ]
+      },
+      {
+       "step": 7,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 2,
+       "victim": 4,
+       "frames": [
+        1,
+        2,
+        5
+       ],
+       "victim_next_use": 11
+      },
+      {
+       "step": 8,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        5
+       ]
+      },
+      {
+       "step": 9,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        5
+       ]
+      },
+      {
+       "step": 10,
+       "page": 3,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 1,
+       "frames": [
+        3,
+        2,
+        5
+       ],
+       "victim_next_use": null
+      },
+      {
+       "step": 11,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 3,
+       "frames": [
+        4,
+        2,
+        5
+       ],
+       "victim_next_use": null
+      },
+      {
+       "step": 12,
+       "page": 5,
+       "outcome": "hit",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        4,
+        2,
+        5
+       ]
+      }
+     ]
+    },
+    "big": {
+     "frames": 4,
+     "faults": 6,
+     "steps": [
+      {
+       "step": 1,
+       "page": 1,
+       "outcome": "fill",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        null,
+        null,
+        null
+       ]
+      },
+      {
+       "step": 2,
+       "page": 2,
+       "outcome": "fill",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        null,
+        null
+       ]
+      },
+      {
+       "step": 3,
+       "page": 3,
+       "outcome": "fill",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        null
+       ]
+      },
+      {
+       "step": 4,
+       "page": 4,
+       "outcome": "fill",
+       "slot": 3,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 5,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 6,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        4
+       ]
+      },
+      {
+       "step": 7,
+       "page": 5,
+       "outcome": "evict",
+       "slot": 3,
+       "victim": 4,
+       "frames": [
+        1,
+        2,
+        3,
+        5
+       ],
+       "victim_next_use": 11
+      },
+      {
+       "step": 8,
+       "page": 1,
+       "outcome": "hit",
+       "slot": 0,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        5
+       ]
+      },
+      {
+       "step": 9,
+       "page": 2,
+       "outcome": "hit",
+       "slot": 1,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        5
+       ]
+      },
+      {
+       "step": 10,
+       "page": 3,
+       "outcome": "hit",
+       "slot": 2,
+       "victim": null,
+       "frames": [
+        1,
+        2,
+        3,
+        5
+       ]
+      },
+      {
+       "step": 11,
+       "page": 4,
+       "outcome": "evict",
+       "slot": 0,
+       "victim": 1,
+       "frames": [
+        4,
+        2,
+        3,
+        5
+       ],
+       "victim_next_use": null
+      },
+      {
+       "step": 12,
+       "page": 5,
+       "outcome": "hit",
+       "slot": 3,
+       "victim": null,
+       "frames": [
+        4,
+        2,
+        3,
+        5
+       ]
+      }
+     ]
+    },
+    "leakSteps": []
+   }
+  }
+ }
+}
