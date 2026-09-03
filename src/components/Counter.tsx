@@ -6,14 +6,25 @@
  * vocabulary rule — what you just did has a name, and the name is X — is
  * performed by the interface here rather than stated in a bubble.
  */
-export function Counter({ faults, named }: { faults: number; named: boolean }) {
+export function Counter({
+  faults,
+  named,
+  lit = false,
+}: {
+  faults: number
+  named: boolean
+  /** The voice is pointing here: the unit it is naming comes up to full strength. */
+  lit?: boolean
+}) {
   const label = named ? 'page faults' : faults === 1 ? 'trip' : 'trips'
   return (
     <div className="flex items-baseline gap-2" aria-live="polite">
       <span className="font-mono text-2xl font-semibold tabular-nums">{faults}</span>
       <span
         key={named ? 'named' : 'plain'}
-        className="animate-[fade-in_400ms_ease-out] font-mono text-xs uppercase tracking-widest text-ink-dim"
+        className={`animate-[fade-in_400ms_ease-out] font-mono text-xs uppercase tracking-widest transition-colors duration-300 ${
+          lit ? 'text-ink' : 'text-ink-dim'
+        }`}
       >
         {label}
       </span>

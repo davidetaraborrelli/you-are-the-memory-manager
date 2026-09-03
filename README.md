@@ -1,6 +1,6 @@
 # You are the memory manager
 
-An interactive lesson on page replacement. Fifteen screens, 9–12 minutes, no
+An interactive lesson on page replacement. Fourteen screens, 9–12 minutes, no
 backend. Design documents live in [`docs-progettazione/`](docs-progettazione/)
 and are internal — they are not published and not part of the deliverable.
 
@@ -22,9 +22,13 @@ The front end never re-implements FIFO, LRU, clock or OPT. It reads the traces.
 The only live logic in TypeScript is the learner's own play: is this page
 resident, evict this slot, count the fault, attribute the regret.
 
-**The one exception is screen 11**, where the learner's `evict()` has to run for
+**The one exception is screen 10**, where the learner's `evict()` has to run for
 real. That is Pyodide in a Web Worker, started warming in the background from
 screen 1 so the editor is ready by the time the learner reaches it.
+
+**Screens are beats, not mounts.** An act is one continuous run of one level,
+with beats that pause it. The tape, the frames and the counter never unmount
+between screens, so `src/screens/` holds one module per *act*, not per screen.
 
 ## Layout
 
@@ -34,7 +38,7 @@ screen 1 so the editor is ready by the time the learner reaches it.
 | `src/data/levels.json` | Generated. Never edit by hand. |
 | `src/lib/` | Types, level access, the machine-state store |
 | `src/components/` | Shared UI: portrait, progress bar, tape, frames |
-| `src/screens/` | One module per storyboard screen |
+| `src/screens/` | One module per act; `src/lib/act*.ts` holds its copy |
 | `public/_headers` | WASM MIME type and cache rules for the host |
 
 ## Two contracts worth not breaking

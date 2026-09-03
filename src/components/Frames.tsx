@@ -15,6 +15,7 @@ export function Frames({
   onChoose,
   regretPage = null,
   stats = null,
+  lit = false,
 }: {
   frames: (number | null)[]
   awaiting: Awaiting | null
@@ -26,8 +27,14 @@ export function Frames({
    * strategy from screen 5 is equally effortless to execute. Level 1 leaves
    * this null and the learner holds their measurement in their head; nothing
    * else about the game changes. That difference is the argument of act 3.
+   *
+   * Screen 6 runs a controlled experiment on top of it: all three signals are
+   * printed, the learner commits to one, and only a victim consistent with that
+   * signal executes. Printing all three is what makes the comparison fair.
    */
   stats?: (TileStats | null)[] | null
+  /** The voice is pointing here: the region label comes up to full strength. */
+  lit?: boolean
 }) {
   return (
     <div>
@@ -35,7 +42,11 @@ export function Frames({
           requests above, memory here, swapped out below. The opening bubbles
           explain them once; these labels mean the learner never has to
           remember which shape was which. */}
-      <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-ink-faint">
+      <p
+        className={`mb-1 font-mono text-[10px] uppercase tracking-widest transition-colors duration-300 ${
+          lit ? 'text-ink' : 'text-ink-faint'
+        }`}
+      >
         memory
       </p>
       <div className="grid grid-cols-3 gap-3">
@@ -81,10 +92,20 @@ export function Frames({
           >
             <span>{page ?? ''}</span>
             {stats?.[slot] && (
-              <span className="mt-1 flex flex-col items-center font-sans text-[10px] font-normal leading-snug opacity-75">
-                <span>{stats[slot].usedAgo === 0 ? 'used just now' : `used ${stats[slot].usedAgo} ago`}</span>
-                <span>here for {stats[slot].hereFor}</span>
-                <span>used {stats[slot].count} times</span>
+              <span className="mt-1 flex flex-col items-center font-sans text-[9px] font-normal leading-snug opacity-75">
+                {/* One line per signal, in the storyboard's words. Screen 6 asks
+                    the learner to follow exactly one of these three and holds
+                    them to it, so each has to be readable on its own without
+                    the other two for context. */}
+                <span>
+                  {stats[slot].usedAgo === 0
+                    ? 'last used: just now'
+                    : `last used: ${stats[slot].usedAgo} ${stats[slot].usedAgo === 1 ? 'request' : 'requests'} ago`}
+                </span>
+                <span>
+                  in memory: {stats[slot].hereFor} {stats[slot].hereFor === 1 ? 'request' : 'requests'}
+                </span>
+                <span>uses: {stats[slot].count}</span>
               </span>
             )}
           </button>

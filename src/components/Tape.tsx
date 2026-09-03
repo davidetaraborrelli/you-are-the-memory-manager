@@ -15,6 +15,7 @@ export function Tape({
   reveal = false,
   flashStep = null,
   pulseMask = false,
+  lit = false,
 }: {
   tape: number[]
   /** Index of the request being served right now. */
@@ -24,10 +25,19 @@ export function Tape({
   flashStep?: number | null
   /** Draw the eye to the hidden future while the voice is talking about it. */
   pulseMask?: boolean
+  /**
+   * The voice is pointing at this region right now. The label comes up to full
+   * strength, so "this strip" lands on a strip that says `requests` back.
+   */
+  lit?: boolean
 }) {
   return (
     <div className="tape">
-      <p className="mb-1 font-mono text-[10px] uppercase tracking-widest text-ink-faint">
+      <p
+        className={`mb-1 font-mono text-[10px] uppercase tracking-widest transition-colors duration-300 ${
+          lit ? 'text-ink' : 'text-ink-faint'
+        }`}
+      >
         requests
       </p>
       <div className="relative overflow-hidden py-3">

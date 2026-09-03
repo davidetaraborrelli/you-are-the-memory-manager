@@ -9,13 +9,16 @@ import { advance, createGame, isDone, resolve, swappedOut } from '@/lib/game'
 import { learnerCommitted, resetMachine, setMachineState } from '@/lib/machine'
 import { BEATS, ambientFor, beatLines, beatMachine, endCard, type Beat, type Focus } from '@/lib/act1'
 
+/** The three regions of the board a line can be lit against. */
+type Region = 'tape' | 'memory' | 'counter'
+
 /** Hits pass on their own; this is how long the learner gets to see one go by. */
 const HIT_MS = 500
 
 /**
  * Screens 1–4: the whole of level 1, played blind.
  *
- * One game, four beats' worth of narration over it. The tape advances on its
+ * One game, a run of beats' worth of narration over it. The tape advances on its
  * own and stops for exactly two reasons — a miss needs a tap, or a beat has
  * something to say. There is no pause control and no step button: the learner
  * is the algorithm, not its operator.
@@ -103,8 +106,35 @@ export function Act1({ onDone }: { onDone: () => void }) {
   // What the current line is pointing at. Everything else steps back, so the
   // learner's eye lands on the thing being described instead of hunting for it.
   const focus: Focus | null = beat?.focus?.[lineIdx] ?? null
-  const faded = (region: Focus) =>
-    focus && focus !== region ? 'opacity-30 transition-opacity duration-300' : 'transition-opacity duration-300'
+
+  /** `mask` is the tape with its hidden future pulsing; the region is the tape. */
+  const lit: Region | null = focus === 'mask' ? 'tape' : focus
+
+  /**
+   * How lit each region is. Two rules, and the order between them is the whole
+   * point: a region the voice is pointing at is never dimmed, even though the
+   * board is inert while the voice has the turn.
+   *
+   * That precedence used to be the other way round for the frames, and it is
+   * invisible in the code and glaring on the screen. `focus === 'memory'` fell
+   * through to the inert dim, so while the welcome explained the slots the
+   * *highlighted* region sat at 45% against 30% for everything else. Fifteen
+   * points of difference is not a highlight.
+   *
+   * Dimming the rest is only half of pointing, and it is the half the learner
+   * sees in their peripheral vision at best: the strip looked exactly as it had
+   * a sentence earlier while the voice said "this strip". So the region being
+   * talked about is also drawn as a lit panel, and its own label comes up to
+   * full strength. The panel is neutral on purpose — an outline in the focus
+   * colour would read as "tappable", which on this screen nothing is.
+   */
+  const region = (r: Region) => {
+    const base = 'rounded-xl px-3 py-2 -mx-3 transition-all duration-300'
+    if (lit) return lit === r ? `${base} bg-surface/40 ring-1 ring-edge` : `${base} opacity-30`
+    // Nothing is being pointed at, so only the board the learner taps on
+    // carries the turn-taking dim.
+    return r === 'memory' && speaking ? `${base} opacity-45` : base
+  }
 
   useEffect(() => setLineIdx(0), [groupKey])
   const screen = beat?.screen ?? (seen.length ? BEATS.find((b) => b.id === seen[seen.length - 1])!.screen : 1)
@@ -120,12 +150,13 @@ export function Act1({ onDone }: { onDone: () => void }) {
             showing that hit. When frozen for a decision it moves forward to the
             request being decided, because you cannot choose blind about which
             page is asking. */}
-        <div className={faded('tape')}>
+        <div className={region('tape')}>
         <Tape
           tape={L1.ref}
           cursor={game.awaiting ? game.awaiting.step - 1 : Math.max(0, game.cursor - 1)}
           flashStep={last?.kind === 'hit' ? last.step : null}
-          pulseMask={beat?.id === 'the-fog'}
+          lit={lit === 'tape'}
+          pulseMask={focus === 'mask'}
         />
         </div>
 
@@ -134,26 +165,23 @@ export function Act1({ onDone }: { onDone: () => void }) {
         {game.awaiting?.regret && (
           <p className="text-sm text-fault">
             You dropped this {game.awaiting.regret.stepsAgo}{' '}
-            {game.awaiting.regret.stepsAgo === 1 ? 'step' : 'steps'} ago.
+            {game.awaiting.regret.stepsAgo === 1 ? 'request' : 'requests'} ago.
           </p>
         )}
 
-        <div
-          className={`transition-opacity duration-300 ${
-            focus && focus !== 'memory' ? 'opacity-30' : speaking ? 'opacity-45' : ''
-          }`}
-        >
+        <div className={region('memory')}>
           <Frames
             frames={game.frames}
             awaiting={speaking ? null : game.awaiting}
             onChoose={choose}
             regretPage={game.awaiting?.regret?.page ?? null}
+            lit={lit === 'memory'}
           />
         </div>
 
-        <div className={`flex items-center justify-between ${faded('counter')}`}>
+        <div className={`flex items-center justify-between ${region('counter')}`}>
           <SwappedOut pages={swappedOut(game)} />
-          <Counter faults={game.faults} named={named} />
+          <Counter faults={game.faults} named={named} lit={lit === 'counter'} />
         </div>
 
         {card && (
@@ -167,7 +195,7 @@ export function Act1({ onDone }: { onDone: () => void }) {
             </p>
             {card.credit.map((c) => (
               <p key={c.page} className="text-hit">
-                Page {c.page}, dropped at step {c.step}. Never came back. Nice call!
+                Page {c.page}, dropped at step {c.step}. Never came back. Good call.
               </p>
             ))}
           </section>

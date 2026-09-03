@@ -78,6 +78,66 @@ console.log('\nfeedback mechanics on level 1, played as LRU')
   check('positive credit', r.credit.map((c) => c.page), [1])
 }
 
+const levelOne = data.levels.l1
+const levelTwo = data.levels.l2
+const fork = levelTwo.fork!
+
+// -- screen 6's experiment ---------------------------------------------------
+// The act rests on one claim: the learner's fault count IS the tested rule's
+// fault count, because the board would not let them play anything else. If
+// consistentSlots and the oracle ever disagree, screen 7's table stops being
+// evidence about the rules and becomes a table of numbers about nothing.
+
+console.log('\nthe experiment reproduces the oracle')
+function playSignal(rule: act2.TestRule): number {
+  let g = createGame(levelTwo.ref, levelTwo.frames)
+  while (!isDone(g)) {
+    g = advance(g)
+    if (!g.awaiting) continue
+    const slot =
+      g.awaiting.mode === 'fill' ? g.frames.indexOf(null) : act2.consistentSlots(g, rule)[0]
+    g = resolve(g, slot)
+  }
+  return g.faults
+}
+for (const rule of ['lru', 'fifo', 'lfu'] as const) {
+  check(`following ${rule} exactly scores what sim.py says`, playSignal(rule), levelTwo.scores[rule])
+}
+
+// And the fork is where they part company. Reaching it is rule-independent —
+// it is the first eviction, so every signal has agreed up to here — which is
+// what lets one replay check all three.
+console.log('\nthe diagnostic fork')
+{
+  // Advance to the first eviction, resolving the fills on the way. advance() is
+  // a no-op while the game is awaiting an answer, so a loop that only advances
+  // never gets past the first fill.
+  let g = createGame(levelTwo.ref, levelTwo.frames)
+  while (!g.awaiting || g.awaiting.mode !== 'evict') {
+    g = g.awaiting ? resolve(g, g.frames.indexOf(null)) : advance(g)
+  }
+  check('the first eviction is the fork sim.py found', g.awaiting.step, fork.step)
+  for (const rule of ['lru', 'fifo', 'lfu'] as const) {
+    const slots = act2.consistentSlots(g, rule)
+    check(`${rule} points where sim.py says`, slots.map((s) => g.frames[s]), [fork[rule]])
+  }
+  // Three signals, three different pages: if any two agreed here the screen
+  // would be comparing rules that never actually disagreed in front of the
+  // learner, and the whole diagnostic would be a claim rather than a sight.
+  check(
+    'and the three point somewhere different',
+    new Set([fork.lru, fork.fifo, fork.lfu]).size,
+    3,
+  )
+  // The enforcement, at the level the UI reads it: a victim another signal
+  // points at is not accepted by this one.
+  check(
+    "a rival signal's victim is not consistent with recency",
+    act2.consistentSlots(g, 'lru').map((s) => g.frames[s]).includes(fork.fifo),
+    false,
+  )
+}
+
 // -- pacing -----------------------------------------------------------------
 // Sequential bubbles make every surplus line a surplus tap, and a learner who
 // is tapping through prose has stopped playing. These caps are the ones the
@@ -88,32 +148,20 @@ console.log('\npacing of the voice')
 const MAX_CHARS = 190
 
 // Act 2's voice is not all in beats: the question, the feedback branches, the
-// handover and the scoreboard copy are plain arrays, and every one of them is
+// experiment briefing and every group on screen 7 are plain arrays, and each is
 // read out one bubble at a time exactly like a beat. They get the same limits.
-// Screen 7's copy branches on declaration AND outcome; every reachable branch
-// gets the same pacing limits, so the pairs below cover each guard once.
-const levelOne = data.levels.l1
-const levelTwo = data.levels.l2
-const scorePairs: [Parameters<typeof act2.scoreboardCopy>[0], number][] = [
-  ['lru', 6], ['lru', 8], ['fifo', 6], ['fifo', 10], ['fifo', 12],
-  ['lfu', 6], ['lfu', 8], ['lfu', 10], ['random', 6], ['random', 9],
-]
+const intro = act2.experimentIntro()
 const act2Groups: { id: string; lines: string[]; focus?: unknown[] }[] = [
   { id: 'ask-the-rule', lines: act2.ASK_THE_RULE },
-  // The hand-over to act 4 branches on whether the learner reached the floor.
-  { id: 'floor:matched', lines: act2.theFloor(levelTwo.scores.opt) },
-  { id: 'floor:missed', lines: act2.theFloor(levelTwo.scores.opt + 3) },
-  ...(['lru', 'fifo', 'lfu', 'random'] as const).map((r) => {
-    const h = act2.handover(r)
-    return { id: `handover:${r}`, lines: h.lines, focus: h.focus }
-  }),
   ...act2.RULE_OPTIONS.map((o) => ({ id: `feedback:${o.id}`, lines: act2.ruleFeedback(o.id) })),
-  ...scorePairs.map(([r, f]) => ({ id: `scoreboard:${r}`, lines: act2.scoreboardCopy(r, f) })),
-  // Screen 7's second group: the same four branches, one bubble at a time.
-  ...(['lru', 'fifo', 'lfu', 'random'] as const).map((r) => ({
-    id: `naming:${r}`,
-    lines: act2.namingCopy(r),
-  })),
+  { id: 'experiment-intro', lines: intro.lines, focus: intro.focus },
+  { id: 'ask-the-signal', lines: act2.ASK_THE_SIGNAL },
+  { id: 'off-rule', lines: act2.OFF_RULE },
+  { id: 'result', lines: act2.RESULT },
+  { id: 'fork-copy', lines: act2.FORK_COPY },
+  { id: 'naming', lines: act2.NAMING },
+  { id: 'generalise', lines: act2.GENERALISE },
+  { id: 'bridge', lines: act2.THE_FLOOR },
 ]
 
 // A beat whose lines depend on the run is two groups to read, not one.
@@ -126,16 +174,13 @@ const groups = [
   { id: 'the-floor:matched', lines: beatLines(floorBeat, atTheFloor), focus: undefined },
   { id: 'the-floor:above', lines: beatLines(floorBeat, aboveIt), focus: undefined },
   ...act2.BEATS.map((b) => ({ id: b.id, lines: b.lines, focus: b.focus })),
-  ...act2Groups.map((g) => ({ ...g, focus: undefined })),
+  ...act2Groups,
 ]
 
 for (const beat of groups) {
   // Only the welcome earns a long group: it is the entire setup, each of its
   // lines introduces a different object on the board, and each one lights that
-  // object up while it is read. It went from six to seven when the fog beat was
-  // deleted and its one load-bearing line moved here — a net loss of two lines
-  // and, more to the point, of a mid-game interruption that explained nothing
-  // that had just happened.
+  // object up while it is read.
   const cap = beat.id === 'welcome' ? 7 : 4
   check(`${beat.id}: ${beat.lines.length} line(s), cap ${cap}`, beat.lines.length <= cap, true)
   check(
@@ -196,56 +241,25 @@ check(
 check('no em dashes beside a decision', ambient.flat().filter((l) => l.includes('—')), [])
 check('and one verb for a request', ambient.flat().filter((l) => /\bneed(ed|ing)\b/i.test(l)), [])
 
-// A key term is highlighted the first time the lesson hands it over and never
-// again: the tint means "this word is new and it will matter", and repeating it
-// on every later mention spends exactly that meaning.
-// Screen 7 must never lie about what the learner did: no "you switched" for a
-// faithful player, no "you had a rule" for a score that says they didn't.
-// "Drop whichever was needed fewest times" is under-determined, and on L2 the
-// tie at step 15 changes the score (8 with a recency tie-break, 9 with arrival
-// order). So screen 7 may only quote a number for it if screen 6 said which
-// tie-break it meant. Recency and arrival order never tie, so only LFU needs it.
-console.log('\nunder-determined rules must state their tie-break')
-const lfuHandover = act2.handover('lfu').lines.join(' ').toLowerCase()
-check('lfu handover states a tie-break', lfuHandover.includes('tie'), true)
+// The regret line names a gap, and act 1 established what a gap is counted in.
+// "Steps" and "requests" for the same distance on the same tape is two units
+// for one thing, which is one more than a learner should have to hold.
 check(
-  'and it is the one the oracle uses (least recently used)',
-  lfuHandover.includes('longest without being used'),
-  true,
+  'a gap is measured in requests, never steps',
+  ambient.flat().filter((l) => /\b\d+ steps?\b/.test(l)),
+  [],
 )
 
-// Screen 7's job is to make a comparison land, and a comparison lands on a
-// number. Wherever the copy concludes that one measurement beat another, it has
-// to say what the winning one was worth — otherwise the learner is left holding
-// an aphorism ("how recently told you everything") and has to do the arithmetic
-// the screen was supposed to do for them.
-console.log('\nconclusions cite the number that carries them')
-const recency = String(levelTwo.scores.lru)
-for (const [rule, faults] of [
-  ['fifo', 10],
-  ['lfu', 8],
-  ['lfu', 10],
-  ['random', 9],
-] as [Parameters<typeof act2.scoreboardCopy>[0], number][]) {
-  check(
-    `${rule}@${faults} names what the good number scores (${recency})`,
-    act2.scoreboardCopy(rule, faults).join(' ').includes(recency),
-    true,
-  )
-}
 // A tile shows a measurement; a rule is what plays. "The other number scores 6"
 // is a category error, and an ambiguous one on a panel of three numbers: the
 // learner cannot tell which number is meant or what it is supposed to have
-// done. Conclusions name the action instead — "dropping whichever had gone
-// longest without being needed would have scored 6".
-// The tile prints "used N ago" for recency and "used N times" for the count:
-// one verb, because both describe the same event, with when-vs-how-many doing
-// the distinguishing. An earlier draft said "needed" for the count on the tile
-// and "without being needed" for recency in the voice, so the same word meant
-// two different measures on the same screen and the recency conclusion read as
-// the counting rule. "Needed" is retired from act 2 entirely.
-// Present-tense "needs" is ordinary English about what a program requires and
-// is fine; "needed"/"needing" is what was standing in for a measurement.
+// done. Conclusions name the action instead.
+// The tile prints "last used" for recency and "uses" for the count: one verb,
+// because both describe the same event, with when-vs-how-many doing the
+// distinguishing. Present-tense "needs" is ordinary English about what a
+// program requires and is fine; "needed"/"needing" is what was standing in for
+// a measurement.
+console.log('\nconclusions cite the number that carries them')
 check(
   'act 2 uses one verb for a request',
   groups.flatMap((g) => g.lines).filter((l) => /\bneed(ed|ing)\b/i.test(l)),
@@ -253,139 +267,131 @@ check(
 )
 check(
   'a measurement is never said to score',
-  scorePairs
-    .flatMap(([r, f]) => act2.scoreboardCopy(r, f))
-    .filter((l) => /\bnumber\b[^.]*\bscores?\b/i.test(l)),
+  act2Groups.flatMap((g) => g.lines).filter((l) => /\bnumber\b[^.]*\bscores?\b/i.test(l)),
   [],
 )
-check(
-  'no stock gesturing left in screen 7',
-  scorePairs.flatMap(([r, f]) => act2.scoreboardCopy(r, f)).filter((l) => /worth keeping/i.test(l)),
-  [],
-)
+// Screen 7's job is to make a comparison land, and a comparison lands on a
+// number. The result group has to say what the winner was worth and what it
+// beat, or the learner is left holding an aphorism.
+{
+  const said = act2.RESULT.join(' ')
+  check('the result quotes the winning count', said.includes(String(levelTwo.scores.lru)), true)
+  check('and what it beat', said.includes(String(levelTwo.scores.fifo)), true)
+}
 
-console.log('\nscreen 7 honesty guards')
-check('fifo played faithfully: not told they switched', act2.scoreboardCopy('fifo', 10).join(' ').includes('stopped playing'), false)
-check('fifo who improved: told they left their rule', act2.scoreboardCopy('fifo', 6).join(' ').includes('stopped playing'), true)
-check('random at ~8: not told they had a rule', act2.scoreboardCopy('random', 9).join(' ').includes('you did have one'), false)
-check('random who beat it: told they had a rule', act2.scoreboardCopy('random', 6).join(' ').includes('you did have one'), true)
-check('lru who drifted: instinct affirmed, drift named', act2.scoreboardCopy('lru', 8).join(' ').toLowerCase().includes('drift'), true)
-check('lfu played faithfully: not told they left it', act2.scoreboardCopy('lfu', 8).join(' ').includes('left your own rule'), false)
-check('lfu who improved: told they left it', act2.scoreboardCopy('lfu', 6).join(' ').includes('left your own rule'), true)
-check(
-  'lfu who improved: not lectured on a discovery they made',
-  act2.scoreboardCopy('lfu', 6).join(' ').includes('How recently told you everything'),
-  false,
-)
+// -- the table ---------------------------------------------------------------
+// All three rules, always, whichever one the learner tested. Two rows would
+// leave the third as an untested rumour on a screen whose whole argument is
+// that the three were compared fairly.
+console.log('\nthe screen 7 table')
+const ACRONYM = /\b(LRU|FIFO|LFU)\b/
+for (const rule of ['lru', 'fifo', 'lfu'] as const) {
+  const rows = act2.ruleRows(rule)
+  check(`${rule}: all three rules are priced`, rows.map((r) => r.id), ['lru', 'fifo', 'lfu'])
+  check(
+    `${rule}: every row carries the oracle's number`,
+    rows.map((r) => r.value),
+    ['lru', 'fifo', 'lfu'].map((r) => levelTwo.scores[r as 'lru']),
+  )
+  // The table is read before the naming group opens, so it may not use a name
+  // the learner has not been given yet.
+  check(`${rule}: no acronym in the labels`, rows.filter((r) => ACRONYM.test(r.label)), [])
+  check(`${rule}: the learner's own row is marked`, rows.filter((r) => r.label.includes('(yours)')).map((r) => r.id), [rule])
+}
 
-// The best possible score used to be the third row of the end card: page text,
-// stated as settled, and the answer to the question the very next beat asks.
-// The lesson's own deletion test says cut it, so it moved into the voice, where
-// a learner is free to disbelieve it. What stays in the table is what they
-// watched happen. And the floor is a property of the tape, never of a rule: on
-// this level LRU and OPT both score 6 by design, and a learner who leaves
-// believing 6 is the floor *because* of LRU has learned the thing screen 14
-// exists to undo.
+// The fork table is the evidence for the fork copy: it may not be drawn before
+// the run that produced it is over, and it says what each page did next.
+{
+  const rows = act2.forkRows()
+  check('the fork table lists the resident pages', rows.map((r) => r.label), fork.mem.map((p) => `page ${p}`))
+  check(
+    'and the page recency dropped is the one that never returns',
+    rows.find((r) => r.label === `page ${fork.lru}`)!.value,
+    'never returns',
+  )
+}
+
+// -- the vocabulary rule -----------------------------------------------------
+// What you just did has a name, and the name is X. Never the name first as a
+// clue. Screen 5 offers four rules in the learner's own words, screen 6 runs
+// one of them and screen 7 prices all three; only once those numbers have
+// landed, and the fork has explained them, does the label arrive.
+console.log('\na rule is named only after it has been played')
+const beforeTheName = [
+  ...act2.ASK_THE_RULE,
+  ...act2.RULE_OPTIONS.map((o) => o.label),
+  ...act2.RULE_OPTIONS.flatMap((o) => act2.ruleFeedback(o.id)),
+  ...intro.lines,
+  ...act2.ASK_THE_SIGNAL,
+  ...act2.SIGNAL_OPTIONS.map((o) => o.label),
+  ...act2.OFF_RULE,
+  ...ambient.flat(),
+  ...act2.RESULT,
+  ...act2.FORK_COPY,
+]
+check('no acronym anywhere before the naming group', beforeTheName.filter((l) => ACRONYM.test(l)), [])
+
+// Every learner leaves with all three names, whichever one they tested, and an
+// acronym is only a name once the words behind it have been said: three
+// capitals on their own are a thing to memorise. Level 2 printed all three
+// measurements on every tile, so none of the three is a stranger by now.
+const EXPANSION: [string, string][] = [
+  ['LRU', 'least recently used'],
+  ['FIFO', 'first in, first out'],
+  ['LFU', 'least frequently used'],
+]
+{
+  const said = act2.NAMING.join(' ')
+  for (const [name, expansion] of EXPANSION) {
+    check(`the learner meets ${name}`, said.includes(name), true)
+    check(`${name} is spelled out`, said.toLowerCase().includes(expansion), true)
+  }
+  // Recency is named last and on its own line. It is the one the tape just
+  // voted for, and the one act 5 spends two screens taking apart; the other two
+  // arrive together as the rules it beat.
+  const lru = said.indexOf('LRU')
+  check(
+    'recency is named last',
+    [said.indexOf('FIFO'), said.indexOf('LFU')].every((i) => i < lru),
+    true,
+  )
+  // And the generalisation is guarded in the same breath. A learner who leaves
+  // act 3 believing recency wins by law has learned the thing screens 8 and 11
+  // exist to undo.
+  const general = act2.GENERALISE.join(' ')
+  check('the win is generalised', /often|usually/i.test(general), true)
+  check('and immediately bounded', /still a bet|not a guarantee/i.test(general), true)
+}
+
+// -- the promise from screen 4 -----------------------------------------------
 console.log('\nthe fun fact, and the promise it comes with')
 {
   const said = beatLines(floorBeat, aboveIt).join(' ')
-  const bragged = beatLines(floorBeat, atTheFloor).join(' ')
   check('screen 4 says the floor out loud', said.includes(String(levelOne.scores.opt)), true)
   // Still `trips`. The counter learns the words "page fault" on the next beat.
   check('and in the word the counter still uses', /\btrips\b/.test(said), true)
   check('not the one it has not learned yet', /page fault/.test(said), false)
   // The promise is what screen 7 collects on. Without it the callback there is
   // a claim about a line the learner may never have registered.
-  check('it promises to come back to it', /come back to that later/.test(said), true)
-  check('the congratulation is guarded on the number', /very good instinct/.test(said), false)
-  check('and offered to the learner who earned it', /very good instinct/.test(bragged), true)
+  check('it promises to come back to it', /back of your mind|come back/i.test(said), true)
   // The end card is what they watched happen, and nothing else.
   check('the end card carries no claim', Object.keys(endCard(aboveIt)).sort(), ['credit', 'faults', 'requests'])
 }
 
 console.log('\nthe floor is a claim, not a row')
-const floorCases: [string, string[]][] = [
-  ['matched', act2.theFloor(levelTwo.scores.opt)],
-  ['missed', act2.theFloor(levelTwo.scores.opt + 3)],
-]
-for (const [id, lines] of floorCases) {
-  const said = lines.join(' ')
-  check(`${id}: quotes the oracle's floor`, said.includes(String(levelTwo.scores.opt)), true)
-  // Two tapes, two floors, and the only thing that changed is the tape. That
-  // pair is the evidence for the line that follows it, so it has to be quoted.
-  check(`${id}: and level 1's, to show it moved`, said.includes(String(levelOne.scores.opt)), true)
-  check(`${id}: collects the promise screen 4 made`, /come back to it|fun fact/.test(said), true)
-  check(`${id}: the floor belongs to the tape, not a rule`, said.includes('belongs to the tape, not to any rule'), true)
-  // It poses the question and offers to answer it. Ending on the bare question
-  // makes the button a way to find out what the machine meant; ending on the
-  // offer makes the same tap an answer to an invitation.
-  check(`${id}: asks how it could know`, /how do I know/i.test(said), true)
-  check(`${id}: and offers to show`, /show you/i.test(lines[lines.length - 1]), true)
-  // It asks how the number is known. Answering it here would spend screen 8.
-  check(`${id}: does not answer its own question`, /in advance|every request|whole tape|the future/i.test(said), false)
+{
+  const said = act2.THE_FLOOR.join(' ')
+  check('it quotes the floor screen 4 promised', said.includes(String(levelOne.scores.opt)), true)
+  check('collects the promise', /still owe you|back on level one/i.test(said), true)
+  // It poses the question and stops. Answering it here would spend screen 8,
+  // whose entire job is letting the learner construct that number themselves.
+  check('asks where the number came from', /where did that number come from/i.test(said), true)
+  check(
+    'and does not answer its own question',
+    /in advance|every request|whole tape|the future|because/i.test(said),
+    false,
+  )
 }
-check(
-  'and no feedback branch settles it either',
-  scorePairs
-    .flatMap(([r, f]) => act2.scoreboardCopy(r, f))
-    .filter((l) => /best possible|nothing could have done better/i.test(l)),
-  [],
-)
-
-// The vocabulary rule: what you just did has a name, and the name is X. Never
-// the name first as a clue. Screen 5 offers four rules in the learner's own
-// words and screen 7 prices the one they picked; only once that number has
-// landed does the label arrive. So the acronyms may appear in exactly one place
-// in act 2 — and an acronym on its own is not a name yet: three capitals are a
-// thing to memorise unless the words behind them are said too.
-console.log('\na rule is named only after it has been played')
-const ACRONYM = /\b(LRU|FIFO|LFU)\b/
-const beforeTheName = [
-  ...act2.ASK_THE_RULE,
-  ...act2.RULE_OPTIONS.map((o) => o.label),
-  ...act2.RULE_OPTIONS.flatMap((o) => act2.ruleFeedback(o.id)),
-  ...(['lru', 'fifo', 'lfu', 'random'] as const).flatMap((r) => act2.handover(r).lines),
-  ...scorePairs.flatMap(([r, f]) => act2.scoreboardCopy(r, f)),
-]
-check('no acronym anywhere before screen 7 names it', beforeTheName.filter((l) => ACRONYM.test(l)), [])
-
-// Every learner leaves with all three names, and an acronym is only a name
-// once the words behind it have been said. Level 2 printed all three
-// measurements on every tile, so none of the three is a stranger, and nobody's
-// vocabulary should depend on which of four buttons they pressed on screen 5.
-const EXPANSION: [string, string][] = [
-  ['LRU', 'least recently used'],
-  ['FIFO', 'first in, first out'],
-  ['LFU', 'least frequently used'],
-]
-const DECLARED: Record<string, string> = { lru: 'LRU', fifo: 'FIFO', lfu: 'LFU', random: 'LRU' }
-for (const rule of ['lru', 'fifo', 'lfu', 'random'] as const) {
-  const said = act2.namingCopy(rule).join(' ')
-  for (const [name, expansion] of EXPANSION) {
-    check(`${rule} meets ${name}`, said.includes(name), true)
-    check(`${rule}: ${name} is spelled out`, said.toLowerCase().includes(expansion), true)
-  }
-  // Order carries the difference between a name and a menu: the rule they
-  // declared is named on its own first, as the thing they earned, and the other
-  // two follow as one aside. A learner who declared nothing is given the rule
-  // that wins here first instead.
-  const own = said.indexOf(DECLARED[rule])
-  const others = EXPANSION.filter(([n]) => n !== DECLARED[rule]).map(([n]) => said.indexOf(n))
-  check(`${rule}: their own rule is named first`, others.every((i) => i > own), true)
-}
-
-// The row relabels itself in place, the way the counter does on screen 4: the
-// learner's own words until the naming group opens, the name after it.
-console.log('\nthe scoreboard row performs the swap')
-for (const rule of ['lru', 'fifo', 'lfu'] as const) {
-  check(`${rule} row before: the learner's words`, ACRONYM.test(act2.declaredRowLabel(rule, false)), false)
-  check(`${rule} row after: the name`, act2.declaredRowLabel(rule, true).startsWith(act2.RULE_NAME[rule]), true)
-}
-check(
-  'the random row has nothing to relabel',
-  act2.declaredRowLabel('random', true),
-  act2.declaredRowLabel('random', false),
-)
 
 // The tutor speaks the way someone would out loud to a room of teenagers, and
 // nobody says an em dash out loud. Commas, full stops and the occasional
@@ -394,9 +400,8 @@ const dashed = groups.flatMap((b) => b.lines.filter((l) => l.includes('—')))
 check('no em dashes in the voice', dashed, [])
 
 // Groups whose ids share a prefix before ':' are mutually exclusive branches
-// (the four answers to screen 5, the three scoreboard cases). A learner sees
-// exactly one of them, so a term marked in each is still marked once for them.
-// Only the first variant of each branch counts.
+// (the four answers to screen 5). A learner sees exactly one of them, so a term
+// marked in each is still marked once for them. Only the first variant counts.
 const firstOfEachBranch = new Map<string, string[]>()
 for (const g of groups) {
   const key = g.id.split(':')[0]

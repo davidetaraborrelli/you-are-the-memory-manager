@@ -6,7 +6,7 @@
 
 export type Outcome = 'hit' | 'fill' | 'evict'
 
-export type Policy = 'fifo' | 'lru' | 'clock' | 'opt'
+export type Policy = 'fifo' | 'lru' | 'lfu' | 'clock' | 'opt'
 
 /** One tick of the tape under some reference policy. */
 export interface Step {
@@ -44,6 +44,28 @@ export interface Scores {
   randomAvg: number
 }
 
+/**
+ * The first eviction on a tape where the three past-looking signals disagree.
+ *
+ * Screen 7 replays this fork and only then reveals `nextUse`. The numbers are
+ * sim.first_signal_fork's, not the interface's: which page each rule points at
+ * is exactly the kind of figure the front end must never re-derive.
+ */
+export interface Fork {
+  /** 1-based tape position of the eviction. */
+  step: number
+  /** The page being requested when memory was full. */
+  request: number
+  /** Resident pages at that moment. */
+  mem: number[]
+  /** The page each signal would evict. */
+  fifo: number
+  lru: number
+  lfu: number
+  /** Page -> 1-based step where it is next requested, or null if never again. */
+  nextUse: Record<string, number | null>
+}
+
 export interface Level {
   name: 'l1' | 'l2' | 'l3'
   title: string
@@ -53,6 +75,8 @@ export interface Level {
   length: number
   scores: Scores
   traces: Partial<Record<Policy, Step[]>>
+  /** Null on tapes whose first eviction is not diagnostic. */
+  fork: Fork | null
 }
 
 export interface BeladyRun {
@@ -86,13 +110,13 @@ export type MachineState =
   | 'withholding'
 
 /**
- * Screen 5: what the learner says they were doing, tested on screen 7.
+ * Screen 5: what the learner says they were doing, held to it on screen 6.
  *
- * Four options, four different measurable things: time since last use, arrival
- * order, total number of uses, and nothing. An earlier set had two options that
- * pointed at the same page ("hadn't touched in a while" and "could remember
- * least about") and one that was ambiguous between two policies ("sitting there
- * longest" reads as both arrival order and idle time), which meant screen 7
- * could test a rule the learner had not meant.
+ * Four options, four different measurable things: time since last use, time in
+ * memory, total number of uses, and nothing. An earlier set had two options
+ * that pointed at the same page ("hadn't touched in a while" and "could
+ * remember least about") and one that was ambiguous between two policies
+ * ("sitting there longest" reads as both arrival order and idle time), which
+ * meant screen 6 could hold the learner to a rule they had not meant.
  */
 export type DeclaredRule = 'lru' | 'fifo' | 'lfu' | 'random'

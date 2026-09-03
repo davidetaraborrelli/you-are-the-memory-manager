@@ -1,9 +1,9 @@
 /**
  * Results, as page text.
  *
- * Rows carry an `id` as well as a label because one of them changes its label
- * in place: on screen 7 the declared rule's row swaps the learner's own words
- * for the name the rest of the world uses.
+ * Rows carry an `id` as well as a label because a row can change its label in
+ * place while its number stays put: screen 7 marks the rule the learner tested
+ * without redrawing the table around it.
  *
  * Scores never go in a speech bubble. The voice reacts to a number; it does not
  * read one out. Keeping the two apart is what stops the machine sounding like a

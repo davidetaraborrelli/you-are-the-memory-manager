@@ -1,7 +1,7 @@
 import { TOTAL_SCREENS } from '@/lib/screens'
 
 /**
- * A thin line at the top, filling across the fifteen screens.
+ * A thin line at the top, filling across the fourteen screens.
  *
  * No numbers, no labels. Brilliant never leaves a learner wondering how much is
  * left, and a lesson that ends on purpose on an open question looks broken

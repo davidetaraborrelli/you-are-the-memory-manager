@@ -188,6 +188,25 @@ def level(name, ref, frames, policies, title):
             "randomAvg": round(sim.rand_avg(ref, frames), 1),
         },
         "traces": {p: TRACERS[p](ref, frames) for p in policies},
+        # Screen 7 replays the first eviction where arrival order, recency and
+        # frequency disagree, then reveals what each victim did next. Which page
+        # each signal points at is a simulator answer, not an interface one.
+        "fork": fork(ref, frames),
+    }
+
+
+def fork(ref, frames):
+    f = sim.first_signal_fork(ref, frames)
+    if f is None:
+        return None
+    return {
+        "step": f["step"],
+        "request": f["request"],
+        "mem": list(f["mem"]),
+        "fifo": f["fifo"],
+        "lru": f["lru"],
+        "lfu": f["lfu"],
+        "nextUse": {str(k): v for k, v in f["next_use"].items()},
     }
 
 
@@ -231,8 +250,7 @@ def verify_against_sim(data):
     # The storyboard's headline numbers, asserted in the shape the UI reads them.
     s1, s2, s3 = (data["levels"][k]["scores"] for k in ("l1", "l2", "l3"))
     assert (s1["fifo"], s1["lru"], s1["opt"]) == (8, 6, 5)
-    assert (s2["fifo"], s2["lru"], s2["opt"]) == (10, 6, 6)
-    assert s2["lfu"] == 8 == round(s2["randomAvg"])
+    assert (s2["fifo"], s2["lru"], s2["lfu"], s2["opt"]) == (9, 7, 9, 6)
     assert (s3["fifo"], s3["lru"], s3["clock"], s3["opt"]) == (11, 8, 8, 7)
     assert s3["clockNoHand"] == 9 and s3["clearAll"] == 9
 
@@ -241,18 +259,29 @@ def verify_against_sim(data):
     assert (b["fifo"]["small"]["faults"], b["fifo"]["big"]["faults"]) == (9, 10)
     assert (b["lru"]["small"]["faults"], b["lru"]["big"]["faults"]) == (10, 8)
     assert (b["opt"]["small"]["faults"], b["opt"]["big"]["faults"]) == (7, 6)
-    assert b["clock"]["leakSteps"] == [7, 8, 11]
-    assert b["lru"]["leakSteps"] == [], "LRU is monotone - screen 14 depends on it"
+    assert b["clock"]["leakSteps"][0] == 7, "screen 12 asks for the first leak"
+    assert b["lru"]["leakSteps"] == [], "LRU is monotone - screen 13 depends on it"
 
-    # Screen 13: the leak at step 7 is page 1, upstairs and gone downstairs.
+    # Screen 12: the leak at step 7 is page 1, upstairs and gone downstairs.
     small7 = {x for x in b["clock"]["small"]["steps"][6]["frames"] if x is not None}
     big7 = {x for x in b["clock"]["big"]["steps"][6]["frames"] if x is not None}
     assert small7 == {1, 2, 5} and big7 == {2, 3, 4, 5}
 
-    # Screen 8 draws a forward line on every OPT eviction; it needs a target.
-    evictions = [s for s in data["levels"]["l2"]["traces"]["opt"] if s["outcome"] == "evict"]
-    assert evictions, "screen 8 has nothing to draw"
+    # Screen 8 replays L1 face up and draws a forward line on every OPT
+    # eviction, so each one needs a target. It moved from L2 to L1 in the
+    # 31 Aug revision: the floor of 5 the learner was promised on screen 4 is
+    # L1's, and proving it on a different tape would prove nothing.
+    evictions = [s for s in data["levels"]["l1"]["traces"]["opt"] if s["outcome"] == "evict"]
+    assert len(evictions) == 2, "screen 8 quotes two forks on L1"
     assert all("victim_next_use" in s for s in evictions)
+
+    # Screen 7 replays this fork and reveals what each victim did next. Three
+    # signals, three different pages, and only recency drops the one that never
+    # comes back - that is the whole argument of act 3.
+    f = data["levels"]["l2"]["fork"]
+    assert f["step"] == 7 and f["request"] == 4 and sorted(f["mem"]) == [1, 2, 3]
+    assert (f["fifo"], f["lru"], f["lfu"]) == (1, 2, 3)
+    assert f["nextUse"] == {"1": 9, "2": None, "3": 10}
 
 
 if __name__ == "__main__":

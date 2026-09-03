@@ -10,19 +10,28 @@ import type { MachineState } from './types.ts'
  * frames and the counter never unmount between them.
  *
  * ── The voice ──────────────────────────────────────────────────────────────
- * Friendly, plain, and completely explicit about what it wants from you. It
- * introduces itself, states the goal before you play rather than after, and
- * explains what just happened in ordinary words.
+ * Warm, clear and concrete. It explains the board and the consequences, states
+ * the goal before you play rather than after, and says what just happened in
+ * ordinary words.
  *
- * The one thing it still never does is hand over the discovery: it will not
- * tell you which page to drop, and it will not name a pattern before you have
- * met it. Being warm and being a spoiler are different things — this is warm.
+ * What it never does is hand over the decision. It will not tell you which page
+ * to drop, and it will not name a pattern before you have met it. Being warm
+ * and being a spoiler are different things.
  *
- * All copy here is final draft and matches STORYBOARD.md.
+ * All copy here is the final draft in STORYBOARD.md, screens 1 to 4. The
+ * 31 Aug 2026 revision shortened nearly every line: the previous draft narrated
+ * the learner's own reasoning back at them after they had acted, which reads as
+ * a lecture arriving where the game should have moved on.
  */
 
-/** A region of the board a line can point at while it is being read. */
-export type Focus = 'tape' | 'memory' | 'counter'
+/**
+ * A region of the board a line can point at while it is being read.
+ *
+ * `mask` is the tape too, with the hidden future pulsing under the line that
+ * says nobody gets to see it. It is a separate value rather than a second flag
+ * so that what a line points at stays one word, declared next to the line.
+ */
+export type Focus = 'tape' | 'mask' | 'memory' | 'counter'
 
 export interface Beat {
   id: string
@@ -61,130 +70,112 @@ function droppedOneFirst(g: Game): boolean {
   return first?.kind === 'evict' && first.victim === 1
 }
 
+/** "one request" / "N requests" — the unit this lesson measures gaps in. */
+function gap(n: number): string {
+  return n === 1 ? 'one request' : `${n} requests`
+}
+
 export const BEATS: Beat[] = [
   {
     // Everything the learner needs before touching anything: who is talking,
     // what the pieces are, what a trip costs, and what winning looks like.
-    // The old draft opened cold and only revealed the goal on screen 4, so the
-    // learner played fourteen requests without knowing what they were for.
+    //
+    // Learning job: understand the board, the goal, and that the opening misses
+    // are normal.
     id: 'welcome',
     screen: 1,
     when: () => true,
     doneLabel: "Let's go",
-    focus: [null, null, 'tape', 'tape', 'memory', 'memory', 'counter'],
+    focus: [null, null, 'mask', 'tape', 'memory', 'counter', 'counter'],
     lines: [
-      "Hi there! I'm the memory manager inside this computer. Deciding what to keep in **fast memory** is my whole job, and today it's yours.",
-      "So, a program is running right now. Everything it needs is stored on a disk, chopped up into numbered chunks called **pages**.",
-      "See that strip along the top? Those are the program's requests, arriving one at a time. You get to see what has already happened, but never what's coming next.",
-      "And before you ask, no, I can't see what's coming either! I never get to read the program. I just get this stream of numbers, same as you.",
-      "These three slots? That's the fast memory. Any page sitting in one can be read instantly. Only three fit, though. That's all the room the hardware gives us.",
-      "If the program asks for a page that isn't in a slot, we have to go and fetch it off the disk. That takes about 100,000 times longer! Let's call it a **trip**.",
-      "So here's the whole job: try to have whatever the program wants next already sitting in a slot. Every time you pull that off, it's a trip nobody has to pay for.",
+      "Hi! I'm the memory manager inside this computer. My job is deciding what stays in fast memory. For this run, you're doing it.",
+      'A program is running. The data it needs is stored on disk in numbered chunks called **pages**.',
+      "This strip is the program's request stream. You can see every request that already happened, but not the ones still to come.",
+      'I never read the program itself. I only receive these page numbers as they arrive, so I do not know what any page means.',
+      'These three slots are fast memory. A page already sitting here is ready immediately, but only three pages fit.',
+      'If the program asks for a page that is not here, we fetch it from disk. That costs a **trip**.',
+      'Fetching pages from the disk is A LOT slower than accessing them from memory. So, your job is to keep trips as low as possible!',
     ],
   },
   {
     id: 'the-score',
     screen: 1,
     when: (g) => g.cursor >= 1,
-    lines: [
-      "And that's one trip! The number in the corner is your score. It counts trips, so the lower you keep it, the better you're doing.",
-    ],
+    focus: ['counter'],
+    lines: ["That's one trip. The counter tracks them, so lower is better."],
   },
   {
+    // The takeaway this screen has to leave: a miss is a normal consequence of
+    // limited memory, not a mistake. A learner who reads the opening faults as
+    // their own failure spends the rest of the lesson defending a score.
     id: 'three-trips',
     screen: 1,
     when: (g) => g.cursor >= 3,
     focus: ['counter', null],
     lines: [
-      "Three trips already! Don't worry though, those three had to happen. The program is just starting up, so those pages have to come in, and there is nothing either of us can do about it.",
-      "So go ahead and consider them free! Everything from here is where it gets interesting.",
+      'Three trips already, but those were unavoidable. The program had never asked for those pages before, so they had to come in.',
+      'Count those as free. The interesting part starts when memory is full.',
     ],
   },
   {
     id: 'free-hit',
     screen: 2,
     when: (g) => g.cursor >= 4,
-    lines: [
-      "Page 1 again, and look, it's already sitting in a slot! No trip, no cost, nothing for you to do. That right there is exactly what we're playing for.",
-    ],
+    focus: ['memory'],
+    lines: ["Page 1 again. It's already here, so that request costs nothing."],
   },
   {
     // Path B: they kept page 1 and the tape paid them back twice.
+    //
+    // One line, and then the run continues. The previous draft followed it with
+    // a second line explaining what the learner had just done ("you read the
+    // past, then made a guess about what was coming"), which is screen 5's
+    // discovery said out loud two screens early.
     id: 'kept-it',
     screen: 3,
     when: (g) => g.cursor >= 7 && !droppedOneFirst(g),
     machine: 'approval',
-    // The explanation half of prompt → attempt → explain. It says what the
-    // learner just *did* (read the past, placed a bet) and deliberately stops
-    // short of *which* reading works — that is the rule they articulate for
-    // themselves on screen 5 and get tested on at screen 7.
-    lines: [
-      'Page 1 came back twice in a row, and you still had it both times! Two free requests. Nice call.',
-      "And look at how you got there. You read what had already happened, then made a guess about what was coming next. That's the whole job, right there.",
-    ],
+    focus: ['memory'],
+    lines: ['Page 1 again, and again. You kept it, so both requests were free.'],
   },
   {
     /**
-     * The fun fact, and the promise it comes with.
+     * The floor, and the promise it comes with.
      *
-     * The fewest trips this tape allows used to be a line on the end card,
-     * page text, stated and never mentioned again. It is not a result the
-     * learner watched happen, it is a claim about a run that never took place,
-     * so it belongs to the voice, where somebody is accountable for it. And
-     * saying it out loud is what lets the machine *owe* the learner an
-     * explanation: screen 7 opens by collecting on this promise.
-     *
-     * It is a separate beat rather than four more lines on the naming group
-     * because it is about the run that just ended, while the naming group is
-     * about what the run was called. Different subjects, and the cap is four.
+     * The fewest trips this tape allows used to be a line on the end card: page
+     * text, stated and never mentioned again. It is not a result the learner
+     * watched happen, it is a claim about a run that never took place, so it
+     * belongs to the voice, where somebody is accountable for it. Saying it out
+     * loud is also what lets the machine *owe* the learner an explanation, and
+     * screen 7 closes by collecting on this promise.
      *
      * The word here is still `trips`. The counter renames itself on the next
-     * beat, and the learner meets `page fault` there, not a bubble early.
-     *
-     * The congratulation is guarded on the number, not offered to everyone.
-     * On this tape {@link L1.scores.opt} is what a player who could see the
-     * whole tape would take, and recency alone takes one more, so a learner who
-     * lands on it blind has done something genuinely uncommon. Saying it to the
-     * rest would be the "well done" with nothing attached to it that the voice
-     * rules forbid.
+     * beat, and the learner meets `page fault` there, not in a bubble early.
      */
     id: 'the-floor',
     screen: 4,
     when: isDone,
     machine: (g) => (g.faults === L1.scores.opt || credit(g).length > 0 ? 'approval' : null),
+    focus: [null, 'counter', null],
     lines: [
-      'Nice work! Level one done, and you did the whole thing blind.',
-      `Fun fact about that tape before we go on: the fewest trips anyone could have made on it was ${L1.scores.opt}.`,
-      "I'll come back to that later, because there's something interesting hiding in how I know it.",
+      'Level one done. You made every replacement without seeing the future.',
+      `Fun fact: the fewest trips this tape allows with three slots is ${L1.scores.opt}!`,
+      `I haven't shown you where that ${L1.scores.opt} comes from yet. Keep it in the back of your mind, for now.`,
     ],
-    linesFor: (g) =>
-      g.faults === L1.scores.opt
-        ? [
-            'Nice work! Level one done, and you did the whole thing blind.',
-            `Fun fact about that tape: the fewest trips anyone could have made on it was ${L1.scores.opt}, and that is exactly what you made.`,
-            'Nobody could have done better than you just did, blind, on a first go. That is a very good instinct.',
-            "I'll come back to that later, because there's something interesting hiding in how I know it.",
-          ]
-        : [
-            'Nice work! Level one done, and you did the whole thing blind.',
-            `Fun fact about that tape before we go on: the fewest trips anyone could have made on it was ${L1.scores.opt}.`,
-            "I'll come back to that later, because there's something interesting hiding in how I know it.",
-          ],
   },
   {
     id: 'the-name',
     screen: 4,
     when: isDone,
     namesTheCounter: true,
+    focus: ['counter', 'memory', null],
     // The last line is a hook, not a summary: it names the gap between what the
-    // learner just did (guessed) and what a computer does (follows a rule), and
-    // points at the next act. A lesson that ends on a closed door teaches that
-    // the knowledge lives in the text; one that ends on an open question does
-    // not — and this level is a door, not the end.
+    // learner just did (improvised) and what a computer does (follows a rule),
+    // and hands over to screen 5, which asks which rule they were already on.
     lines: [
-      "Every trip you made has a proper name, by the way. It's called a **page fault**: the program asked for a page that wasn't in memory, and everything had to stop until it arrived.",
-      "That choice you kept making, which page to throw out when memory is full? It's called **page replacement**, and every computer on Earth is doing it right now, thousands of times a second.",
-      "The difference is that a real one doesn't guess. It follows one precise rule, every single time. Figuring out what that rule should be is exactly what we're doing next!",
+      'By the way, those trips have a proper name: **page faults**. A requested page was missing from memory, so it had to be fetched.',
+      'And the choice you kept making, which resident page to remove, is called **page replacement**.',
+      "As you might have guessed, a real memory manager can't just improvise every time. It needs a rule to keep those trips to a minimum. And you may have already been following one!",
     ],
   },
 ]
@@ -209,74 +200,61 @@ export function ambientFor(g: Game): string[] | null {
     // There is nothing to decide here — every empty slot is the same slot —
     // so the copy says "the" and the board offers exactly one target.
     return step === 1
-      ? [`Page ${page} is being asked for, and it isn't here yet. Tap the empty slot to fetch it in.`]
+      ? [`Page ${page} is being asked for and it is not here yet. Tap the empty slot to fetch it in.`]
       : [`Page ${page} now, also not here. Tap the next empty slot.`]
   }
+
   const firstEviction = !g.events.some((e) => e.kind === 'evict')
   if (firstEviction) {
-    // Prompt, then stop. It says evidence exists and where it is; it does not
-    // say what the evidence shows. Characterising it ("one of them was used
-    // much more recently") would hand over the intuition the learner is here
-    // to have — and an intuition you were given is one you don't keep.
+    // Prompt, then stop. It admits no rule has been taught yet, points at the
+    // evidence, and asks for an instinct. What it does not do is characterise
+    // the evidence ("one of them was used much more recently"), which would
+    // hand over the intuition the learner is here to have.
     return [
-      `Okay, here's your first real decision! Page ${page} is being asked for, memory is full, so one of these three has to go.`,
-      "This isn't a coin flip, by the way. Look back along the tape, every request so far is still up there. So, which of these three do you think you're least likely to need next?",
+      `Now memory is full and page ${page} needs a slot. One of these three pages has to go.`,
+      "I know, I haven't taught you how to choose yet. Just look at the pages requested so far and see what your instinct tells you.",
+      "Which page do you think you're least likely to need next? Tap it.",
     ]
   }
 
-  // The page they dropped is being asked for again — the most instructive
-  // moment in the level, and the whole of it is said here, once, while the
-  // learner is looking at it and about to choose again.
-  //
-  // It used to be said twice: an acknowledgement now and the identical lesson
-  // as a beat after the next choice. Repeating yourself after someone has
-  // acted reads as a lecture arriving where the game should have moved on.
+  // The page they dropped is being asked for again: the most instructive moment
+  // in the level, and the whole of it is said here, once, while the learner is
+  // looking at it and about to choose again.
   const r = g.awaiting.regret
   if (r) {
-    const gap = r.stepsAgo === 1 ? 'one step' : `${r.stepsAgo} steps`
     const firstBurn = !g.events.some((e) => e.kind === 'evict' && e.regret !== null)
     if (!firstBurn) {
-      // Every regret after the first gets the fact and nothing else. The
-      // lesson does not improve by being delivered again.
-      return [`Page ${page} is back! You dropped it ${gap} ago. Have another go.`]
+      // Every regret after the first is one line. The lesson does not improve
+      // by being delivered a second time.
+      return [`Page ${page} is back. You dropped it ${gap(r.stepsAgo)} ago.`]
     }
 
     const lines = [
-      `Ah, page ${page} is back! And you let it go ${gap} ago, so now we have to fetch it all over again.`,
-      "That's what a wrong guess costs around here. It never stings straight away. It comes back later and charges you a trip.",
+      `Ah, page ${page} is back already.`,
+      `You dropped it ${gap(r.stepsAgo)} ago, so now we have to fetch it again.`,
     ]
-    // If the page had just been used, the evidence was on the tape and saying
-    // so now costs nothing — the choice it criticises was already committed.
-    //
-    // Two things this line has to be careful about. It names the page instead
-    // of saying "it", because the previous line's "it" is the wrong guess, not
-    // the page, and a pronoun that changes referent between two bubbles is a
-    // pronoun the learner has to solve. And it measures along the tape rather
-    // than in time: the first line already spent "N steps ago" on the distance
-    // from now back to the eviction, so a second time-gap, counted from a
-    // different origin, reads as a correction of the first. "Back along the
-    // tape" is a place, and it is the phrase the previous screen already used
-    // for exactly this move.
+    // If the page had just been requested, the evidence was on the tape and
+    // saying so now costs nothing: the choice it comments on is already
+    // committed. It stops at "maybe that was a clue" because naming the clue is
+    // the rule, and the rule is screen 5's job, not this screen's.
     const droppedAt = g.awaiting.step - r.stepsAgo
     const lastUse = g.ref.lastIndexOf(page, droppedAt - 2)
-    const before = droppedAt - 1 - lastUse
-    lines.push(
-      lastUse >= 0 && before <= 2
-        ? `Worth noticing! When you dropped page ${page}, its last request was only ${before === 1 ? 'one step' : `${before} steps`} back along the tape, still up there to see. Have another go.`
-        : "No harm done, that's how this goes! Have another look and pick the one you're least likely to need.",
-    )
+    if (lastUse >= 0 && droppedAt - 1 - lastUse <= 2) {
+      lines.push(`Page ${page} had just appeared. Maybe that was a clue!`)
+    }
     return lines
   }
-  return [`Page ${page} isn't here. Drop whichever one you're least likely to need again.`]
+
+  return [`Page ${page} needs a slot. Which page do you drop?`]
 }
 
 /**
  * Screen 4's end card: what the learner did, as page text.
  *
- * It used to carry a *Best possible on this tape* line too. That is not
+ * It used to carry a *best possible on this tape* line too. That is not
  * something they watched happen, and a row in a table cannot be doubted, which
  * is exactly what the lesson wants the learner to do with it. The number moved
- * into the voice, one beat earlier. What is left here is the run itself.
+ * into the voice, one beat later. What is left here is the run itself.
  */
 export function endCard(g: Game) {
   return { faults: g.faults, requests: g.ref.length, credit: credit(g) }
