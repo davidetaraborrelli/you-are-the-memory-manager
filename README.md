@@ -1,8 +1,7 @@
 # You are the memory manager
 
 An interactive lesson on page replacement. Fourteen screens, 9–12 minutes, no
-backend. Design documents live in [`docs-progettazione/`](docs-progettazione/)
-and are internal — they are not published and not part of the deliverable.
+backend.
 
 ```bash
 npm install
