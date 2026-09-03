@@ -66,6 +66,54 @@ export interface Fork {
   nextUse: Record<string, number | null>
 }
 
+/**
+ * One eviction on a tape played with the whole future visible.
+ *
+ * Screen 8 is the learner replaying level 1 face up, and at a fork like this
+ * every option has an answer printed on the tape: the step that page comes back
+ * on, or nothing at all if it never does. That is what lets a wrong tap be
+ * refused with a fact rather than a nudge, and the fact is
+ * sim.face_up_decisions', not the interface's.
+ */
+export interface Decision {
+  /** 1-based tape position of the eviction. */
+  step: number
+  /** The page arriving to a full memory. */
+  request: number
+  /** Resident pages at that moment. */
+  mem: number[]
+  /** Page -> 1-based step where it is next requested, or null if never again. */
+  nextUse: Record<string, number | null>
+  /** The page whose next use is farthest away: the only tap that executes. */
+  victim: number
+}
+
+/**
+ * Why the best score on a tape is the best score, in the two parts screen 8
+ * puts on the tape rather than in a bubble.
+ *
+ * A floor asserted by a tutor is a number to believe. These are the facts it is
+ * built from: every distinct page has to enter once, and the request that finds
+ * memory full forces one more whenever every page it could displace is asked
+ * for again. `atLeast` is the bound; it is only *the floor* because `achieved`,
+ * which is what the learner scores, reaches it.
+ */
+export interface Floor {
+  /** Page -> the 1-based step it is first requested on. One fault each. */
+  firstUses: Record<string, number>
+  /** How many pages must enter: the cold misses nobody can avoid. */
+  unavoidable: number
+  /** The first request that arrives with memory full, or null if none does. */
+  forcedStep: number | null
+  forcedRequest: number | null
+  /** What was resident then, and when each of them is asked for again. */
+  resident: number[]
+  residentNextUse: Record<string, number | null>
+  /** The bound the two facts add up to, and the count OPT actually reaches. */
+  atLeast: number
+  achieved: number
+}
+
 export interface Level {
   name: 'l1' | 'l2' | 'l3'
   title: string
@@ -77,6 +125,9 @@ export interface Level {
   traces: Partial<Record<Policy, Step[]>>
   /** Null on tapes whose first eviction is not diagnostic. */
   fork: Fork | null
+  /** Every fork of a face-up replay, in order. Screen 8 plays L1's two. */
+  decisions: Decision[]
+  floor: Floor
 }
 
 export interface BeladyRun {

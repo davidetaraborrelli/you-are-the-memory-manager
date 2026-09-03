@@ -19,7 +19,7 @@ export const SCREENS = [
   { n: 5, act: 2, id: 'say-your-rule', title: 'Say your rule out loud', built: true },
   { n: 6, act: 3, id: 'run-the-experiment', title: 'Run the experiment', built: true },
   { n: 7, act: 3, id: 'recency-wins', title: 'Recency wins this test', built: true },
-  { n: 8, act: 4, id: 'the-whole-tape', title: 'The whole tape', built: false },
+  { n: 8, act: 4, id: 'the-whole-tape', title: 'The whole tape', built: true },
   { n: 9, act: 5, id: 'recency-has-a-price', title: 'Exact recency has a price', built: false },
   { n: 10, act: 5, id: 'make-it-executable', title: 'Make the cheap rule executable', built: false },
   { n: 11, act: 6, id: 'one-more-slot', title: 'One more slot', built: false },

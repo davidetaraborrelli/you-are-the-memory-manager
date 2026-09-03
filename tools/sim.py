@@ -297,6 +297,58 @@ def face_up_decisions(ref, n):
     return out
 
 
+def floor_argument(ref, n):
+    """Why the floor is the floor, as the two facts it rests on.
+
+    1. Every distinct page has to be fetched at least once. The number of
+       distinct pages is therefore a lower bound nobody can argue with.
+    2. The first request that arrives with memory already full forces one more,
+       *provided* every page it could displace is requested again afterwards:
+       whichever one leaves has to come back a second time.
+
+    Added 3 Sep 2026 for screen 8's beat 4. The screen shows both facts on the
+    tape and then says the number out loud, so both are derived here rather
+    than asserted in the copy. `at_least` is the bound they add up to; the
+    screen may only call it *the floor* because `achieved` reaches it.
+    """
+    first_uses, seen = {}, []
+    for i, p in enumerate(ref):
+        if p not in first_uses:
+            first_uses[p] = i + 1
+
+    i = first_decision(ref, n)
+    if i is None:
+        return {
+            'first_uses': first_uses,
+            'unavoidable': len(first_uses),
+            'forced_step': None,
+            'forced_request': None,
+            'resident': (),
+            'resident_next_use': {},
+            'at_least': len(first_uses),
+            'achieved': opt(ref, n),
+        }
+
+    for p in ref[:i]:
+        if p not in seen:
+            seen.append(p)
+    resident_next_use = {m: next_use(ref, i, m) for m in seen}
+    # The forced fault only follows if every resident is asked for again. A page
+    # that never returns can be dropped for free, and then this second fact
+    # proves nothing: the bound stays at the cold misses.
+    forced = all(v is not None for v in resident_next_use.values())
+    return {
+        'first_uses': first_uses,
+        'unavoidable': len(first_uses),
+        'forced_step': i + 1,
+        'forced_request': ref[i],
+        'resident': tuple(seen),
+        'resident_next_use': resident_next_use,
+        'at_least': len(first_uses) + (1 if forced else 0),
+        'achieved': opt(ref, n),
+    }
+
+
 def first_signal_fork(ref, n):
     """First eviction fork, annotated with the three past-looking signals.
 
@@ -362,39 +414,57 @@ def verify():
     assert opt(L1, 3) == 5                                    # and they add up to the floor
     o = run_log(L1, 3, 'opt')[0]
 
-    # Beat 4: three trips nobody can avoid, then page 1 is asked for again and
-    # is still in a slot. Four steps go by before the first real choice.
+    # Beat 2 opens on a replay: three trips nobody can avoid, then page 1 is
+    # asked for again and is still in a slot. Four steps go by before the
+    # learner's first real choice, and the screen plays all four for them.
     assert len(set(L1[:3])) == 3 and L1[3] in L1[:3]
     assert [s[2] for s in o[:4]] == ['MISS', 'MISS', 'MISS', 'hit']
 
-    # Beat 6, step 5. The three options and the step each comes back on, which
-    # is what the per-option feedback quotes: page 1 at step 6 (so dropping it
-    # fetches it straight back), page 2 at step 8, page 3 not until step 10.
+    # Beat 2's fork, step 5. The three options and the step each comes back on,
+    # which is what the per-option feedback quotes: page 1 at step 6 (so
+    # dropping it fetches it straight back), page 2 at step 8, page 3 at 10.
     assert dec[0][1] == {1: 6, 2: 8, 3: 10}
     assert dec[0][2] == 3
     assert min(dec[0][1], key=dec[0][1].get) == 1             # the worst pick is the next request
 
-    # Beat 7: steps 6 to 9 are four hits, bought by that one choice.
+    # Beat 3 opens on what that one choice bought: steps 6 to 9 are four hits.
     assert all(s[2] == 'hit' for s in o[5:9])
 
-    # Beat 8, step 10. Page 1 is never requested again, which is why the copy
-    # calls it the easiest call the learner will ever make, and why this second
-    # decision needs no pointer at the evidence the way the first one does.
+    # Beat 3's fork, step 10. Page 1 is never requested again, which is why the
+    # copy calls it the easiest call the learner will ever make, and why this
+    # second decision needs no pointer at the evidence the way the first does.
     assert dec[1][1] == {1: None, 2: 11, 4: 13}
     assert dec[1][2] == 1
     assert 1 not in L1[10:]
 
-    # Beat 9: four more hits, the counter holds, the tape ends on 5.
+    # Beat 4 opens on the finished tape: four more hits, and it ends on 5.
     assert all(s[2] == 'hit' for s in o[10:])
     assert sum(1 for s in o if s[2] == 'MISS') == 5
 
-    # Beat 5 is the only instruction of method on the screen, and it is only
-    # honest because a wrong tap can be refused with a checkable fact rather
+    # Refusing a wrong tap is the only instruction of method on the screen, and
+    # it is only honest because the refusal can quote a checkable fact rather
     # than a hint. Every option at both forks has one: a step number, or the
     # fact that the page never returns.
     for step, opts, _ in dec:
         assert len(opts) == 3
         assert all(v is None or v > step for v in opts.values())
+
+    # Beat 4 proves the floor instead of asserting it, and the proof is two
+    # facts. Four pages each have to enter once. Then page 4 arrives at step 5
+    # with 1, 2 and 3 resident and every one of them is requested again, so
+    # whichever leaves comes back: five is a bound before it is a score.
+    fa = floor_argument(L1, 3)
+    assert fa['first_uses'] == {1: 1, 2: 2, 3: 3, 4: 5}
+    assert fa['unavoidable'] == 4
+    assert fa['forced_step'] == 5 and fa['forced_request'] == 4
+    assert set(fa['resident']) == {1, 2, 3}
+    assert fa['resident_next_use'] == {1: 6, 2: 8, 3: 10}
+    assert fa['at_least'] == 5 == fa['achieved'] == opt(L1, 3)
+    # The screen only calls the bound a floor because the learner reached it.
+    # On any tape a lower bound that exceeded the optimum would be a wrong
+    # argument stated confidently, which is the one thing a proof may not be.
+    for r in (L1, L2, L3, BELADY):
+        assert floor_argument(r, 3)['at_least'] <= opt(r, 3)
 
     # Level 2 — act 3 isolates which signal from the past is most useful.
     # Revised 31 Aug 2026: LRU must win clearly among the practical past-only

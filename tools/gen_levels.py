@@ -192,6 +192,13 @@ def level(name, ref, frames, policies, title):
         # frequency disagree, then reveals what each victim did next. Which page
         # each signal points at is a simulator answer, not an interface one.
         "fork": fork(ref, frames),
+        # Screen 8 hands the learner the finished tape and asks them to replay
+        # it themselves. What it needs at each fork is the option table: every
+        # resident page and the step it comes back on, which is what the
+        # refusal of a wrong tap quotes back at them.
+        "decisions": decisions(ref, frames),
+        # And the argument for why the count they land on is the floor.
+        "floor": floor(ref, frames),
     }
 
 
@@ -207,6 +214,41 @@ def fork(ref, frames):
         "lru": f["lru"],
         "lfu": f["lfu"],
         "nextUse": {str(k): v for k, v in f["next_use"].items()},
+    }
+
+
+def decisions(ref, frames):
+    """Every eviction a learner faces replaying the tape with the future visible.
+
+    One entry per fork: the resident pages, the step each of them comes back on
+    (None if it never does), and the page OPT drops. Screen 8 reads this to
+    refuse a wrong tap with a fact instead of a hint, so the fact has to be the
+    simulator's rather than the interface's.
+    """
+    return [
+        {
+            "step": step,
+            "request": ref[step - 1],
+            "mem": list(opts),
+            "nextUse": {str(page): nxt for page, nxt in opts.items()},
+            "victim": victim,
+        }
+        for step, opts, victim in sim.face_up_decisions(ref, frames)
+    ]
+
+
+def floor(ref, frames):
+    """The lower bound, in the two parts screen 8 shows on the tape."""
+    f = sim.floor_argument(ref, frames)
+    return {
+        "firstUses": {str(page): step for page, step in f["first_uses"].items()},
+        "unavoidable": f["unavoidable"],
+        "forcedStep": f["forced_step"],
+        "forcedRequest": f["forced_request"],
+        "resident": list(f["resident"]),
+        "residentNextUse": {str(p): n for p, n in f["resident_next_use"].items()},
+        "atLeast": f["at_least"],
+        "achieved": f["achieved"],
     }
 
 
@@ -274,6 +316,25 @@ def verify_against_sim(data):
     evictions = [s for s in data["levels"]["l1"]["traces"]["opt"] if s["outcome"] == "evict"]
     assert len(evictions) == 2, "screen 8 quotes two forks on L1"
     assert all("victim_next_use" in s for s in evictions)
+
+    # The forks the learner actually plays, in the shape the screen reads them.
+    # Two decisions and only two is what lets screen 8 be one continuous replay
+    # with no guided multistep: there is nothing to guide through.
+    d1 = data["levels"]["l1"]["decisions"]
+    assert [d["step"] for d in d1] == [5, 10], "screen 8 plays two forks"
+    assert d1[0]["nextUse"] == {"1": 6, "2": 8, "3": 10} and d1[0]["victim"] == 3
+    assert d1[1]["nextUse"] == {"1": None, "2": 11, "4": 13} and d1[1]["victim"] == 1
+    # Every option carries a checkable fact, or a refusal would have to hint.
+    assert all(len(d["nextUse"]) == 3 for d in d1)
+
+    # Beat 4 proves the floor rather than asserting it: four pages that each
+    # have to enter once, plus one forced when the fifth request finds memory
+    # full. The learner's own run is what makes the bound a floor.
+    fl = data["levels"]["l1"]["floor"]
+    assert (fl["unavoidable"], fl["forcedStep"], fl["forcedRequest"]) == (4, 5, 4)
+    assert fl["firstUses"] == {"1": 1, "2": 2, "3": 3, "4": 5}
+    assert fl["residentNextUse"] == {"1": 6, "2": 8, "3": 10}
+    assert fl["atLeast"] == fl["achieved"] == s1["opt"] == 5
 
     # Screen 7 replays this fork and reveals what each victim did next. Three
     # signals, three different pages, and only recency drops the one that never

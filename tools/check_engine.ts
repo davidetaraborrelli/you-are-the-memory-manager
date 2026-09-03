@@ -13,6 +13,7 @@
 import { createGame, advance, resolve, isDone, credit } from '../src/lib/game.ts'
 import { BEATS, ambientFor, beatLines, endCard } from '../src/lib/act1.ts'
 import * as act2 from '../src/lib/act2.ts'
+import * as act3 from '../src/lib/act3.ts'
 import type { Game } from '../src/lib/game.ts'
 import type { LevelData, Step } from '../src/lib/types.ts'
 // Imported directly rather than through src/lib/levels.ts: that module uses the
@@ -138,6 +139,154 @@ console.log('\nthe diagnostic fork')
   )
 }
 
+// -- screen 8's face-up replay ----------------------------------------------
+// The screen enforces a right answer, which it may only do because the tape is
+// open and every refusal can quote a fact off it. Two things therefore have to
+// hold: the enforced run really is the floor, and no refusal ever hands over
+// the page it is refusing.
+
+console.log('\nthe face-up replay')
+{
+  let g = createGame(levelOne.ref, levelOne.frames)
+  const forks: number[] = []
+  while (!isDone(g)) {
+    g = advance(g)
+    if (!g.awaiting) continue
+    if (g.awaiting.mode === 'fill') {
+      // The screen resolves these itself: every empty slot is the same slot.
+      g = resolve(g, g.frames.indexOf(null))
+      continue
+    }
+    const d = act3.decisionAt(g.awaiting.step)
+    check(`step ${g.awaiting.step} is a fork the screen knows`, d !== null, true)
+    forks.push(g.awaiting.step)
+    g = resolve(g, g.frames.indexOf(d!.victim))
+  }
+  // Playing only the taps the screen accepts has to land on the number screen 4
+  // promised. If it did not, the screen would be enforcing a rule that never
+  // reaches the floor it then claims to have proved.
+  check('the two forks are the ones sim.py found', forks, levelOne.decisions.map((d) => d.step))
+  check('and playing them scores the floor', g.faults, levelOne.scores.opt)
+  check('which is the number screen 4 promised', g.faults, levelOne.floor.achieved)
+}
+
+console.log('\na refusal quotes the tape, never the answer')
+for (const d of levelOne.decisions) {
+  for (const page of d.mem) {
+    const said = act3.verdict(d, page).join(' ')
+    const next = d.nextUse[String(page)]
+    if (page === d.victim) {
+      // The confirmation is the argument, so it carries the evidence: every
+      // page's next use, or the fact that this one has none.
+      check(
+        `fork ${d.step}: the confirmation shows its working`,
+        next === null
+          ? /never/.test(said)
+          : d.mem.every((m) => said.includes(String(d.nextUse[String(m)]))),
+        true,
+      )
+      continue
+    }
+    // A refusal prices the tap: the step that page comes back on, or the
+    // stronger form of it when the page is the very next request.
+    check(
+      `fork ${d.step}: refusing ${page} prices it`,
+      next === d.step + 1 ? /very next request/.test(said) : said.includes(String(next)),
+      true,
+    )
+    // And never names the page that would have executed. A refusal that leaks
+    // the answer turns two decisions into two taps.
+    check(
+      `fork ${d.step}: refusing ${page} does not name page ${d.victim}`,
+      new RegExp(`\\b${d.victim}\\b`).test(said),
+      false,
+    )
+  }
+  // Nor does the prompt. The voice says everything except which page to drop.
+  check(
+    `fork ${d.step}: the prompt does not name page ${d.victim}`,
+    new RegExp(`\\b${d.victim}\\b`).test(act3.askAt(d).join(' ')),
+    false,
+  )
+}
+// A refused tap is not scored and not marked, so it is not called wrong either.
+check(
+  'and nothing is called wrong',
+  levelOne.decisions
+    .flatMap((d) => d.mem.flatMap((p) => act3.verdict(d, p)))
+    .filter((l) => /wrong|incorrect|mistake/i.test(l)),
+  [],
+)
+
+console.log('\nthe floor is proved, not asserted')
+{
+  const fl = levelOne.floor
+  check(
+    'the bound is the score the learner reaches',
+    [fl.atLeast, fl.achieved],
+    [levelOne.scores.opt, levelOne.scores.opt],
+  )
+  const said = act3.PROOF.lines.join(' ')
+  check('the proof quotes the faults nobody can avoid', said.includes(String(fl.unavoidable)), true)
+  check('and the request that forces one more', said.includes(`page ${fl.forcedRequest}`), true)
+  // Derived here rather than read back from the field the copy uses, so this is
+  // a second opinion about which cells the line is pointing at.
+  const firstAppearance = [...new Set(levelOne.ref)]
+    .map((p) => levelOne.ref.indexOf(p) + 1)
+    .sort((a, b) => a - b)
+  check('the first mark is every first appearance', act3.proofMarks(0), firstAppearance)
+  check('the second is the step memory fills', act3.proofMarks(1), [fl.forcedStep])
+  // The card ends with the learner's own count beside the bound. Passing the
+  // floor in for both would make the two meeting a foregone conclusion.
+  const rows = act3.proofRows(2, levelOne.scores.opt)
+  check(
+    'the card prices the bound',
+    rows.map((r) => r.value),
+    [fl.atLeast, levelOne.scores.opt, fl.atLeast],
+  )
+  check('and it is the floor that is marked', rows.filter((r) => r.emphasis).map((r) => r.id), [
+    'floor',
+  ])
+  check(
+    'the run is quoted at the count it reached',
+    act3.WHOLE_TAPE.lines.join(' ').includes(String(levelOne.scores.opt)),
+    true,
+  )
+}
+
+console.log('\nOPT is named after it has been played, and priced after that')
+{
+  const beforeTheName = [
+    ...act3.OPEN.lines,
+    ...levelOne.decisions.flatMap((d) => [
+      ...act3.askAt(d),
+      ...d.mem.flatMap((p) => act3.verdict(d, p)),
+    ]),
+    ...act3.WHOLE_TAPE.lines,
+    ...act3.PROOF.lines,
+  ]
+  check('no name before the work that earns it', beforeTheName.filter((l) => /\bOPT\b/.test(l)), [])
+  check('and it arrives spelled out', /optimal page replacement/i.test(act3.EXTRACT.lines.join(' ')), true)
+  // Exactly one option is about information rather than cost, and the two that
+  // are about cost are redirected at the same wall rather than marked wrong.
+  check('the answer is the information option', act3.whyFeedback('future')[0].startsWith('Exactly'), true)
+  for (const id of ['time', 'memory']) {
+    check(`${id} is redirected, not scored`, /cost problem/.test(act3.whyFeedback(id)[0]), true)
+  }
+  // Beat 6 re-prices level 2 against the ruler the learner has just built.
+  const rows = act3.rulerRows()
+  check(
+    'the ruler table carries the oracle',
+    rows.map((r) => r.value),
+    [levelTwo.scores.lru, levelTwo.scores.opt],
+  )
+  check(
+    'and the gap the voice quotes is the one in the table',
+    act3.CATEGORY.join(' ').includes(String(levelTwo.scores.lru - levelTwo.scores.opt)),
+    true,
+  )
+}
+
 // -- pacing -----------------------------------------------------------------
 // Sequential bubbles make every surplus line a surplus tap, and a learner who
 // is tapping through prose has stopped playing. These caps are the ones the
@@ -164,6 +313,19 @@ const act2Groups: { id: string; lines: string[]; focus?: unknown[] }[] = [
   { id: 'bridge', lines: act2.THE_FLOOR },
 ]
 
+// Screen 8's voice is written the same way: plain arrays read one bubble at a
+// time, plus one branch per answer to the question that closes beat 5.
+const act3Groups: { id: string; lines: string[]; focus?: unknown[] }[] = [
+  { id: 'open', lines: act3.OPEN.lines, focus: act3.OPEN.focus },
+  { id: 'whole-tape', lines: act3.WHOLE_TAPE.lines, focus: act3.WHOLE_TAPE.focus },
+  { id: 'proof', lines: act3.PROOF.lines, focus: act3.PROOF.focus },
+  { id: 'extract', lines: act3.EXTRACT.lines, focus: act3.EXTRACT.focus },
+  { id: 'why-not', lines: act3.WHY_NOT },
+  ...act3.WHY_OPTIONS.map((o) => ({ id: `why:${o.id}`, lines: act3.whyFeedback(o.id) })),
+  { id: 'category', lines: act3.CATEGORY },
+  { id: 'the-price', lines: act3.BRIDGE },
+]
+
 // A beat whose lines depend on the run is two groups to read, not one.
 const floorBeat = BEATS.find((b) => b.id === 'the-floor')!
 const atTheFloor = { ...createGame(levelOne.ref, levelOne.frames), faults: levelOne.scores.opt }
@@ -175,6 +337,7 @@ const groups = [
   { id: 'the-floor:above', lines: beatLines(floorBeat, aboveIt), focus: undefined },
   ...act2.BEATS.map((b) => ({ id: b.id, lines: b.lines, focus: b.focus })),
   ...act2Groups,
+  ...act3Groups,
 ]
 
 for (const beat of groups) {
@@ -223,11 +386,21 @@ function ambientGroups(
   return said
 }
 
+/** Screen 8's prompt at a fork. Silent everywhere else, like the others. */
+function faceUp(g: Game): string[] | null {
+  if (g.awaiting?.mode !== 'evict') return null
+  const d = act3.decisionAt(g.awaiting.step)
+  return d ? act3.askAt(d) : null
+}
+
 const ambient = [
   ...ambientGroups(levelOne.ref, levelOne.frames, levelOne.traces.lru!, ambientFor),
   ...ambientGroups(levelOne.ref, levelOne.frames, levelOne.traces.fifo!, ambientFor),
   ...ambientGroups(levelTwo.ref, levelTwo.frames, levelTwo.traces.lru!, act2.ambientL2),
   ...ambientGroups(levelTwo.ref, levelTwo.frames, levelTwo.traces.fifo!, act2.ambientL2),
+  // Screen 8 speaks beside a decision twice, and answers every tap at both.
+  ...ambientGroups(levelOne.ref, levelOne.frames, levelOne.traces.opt!, faceUp),
+  ...levelOne.decisions.flatMap((d) => d.mem.map((p) => act3.verdict(d, p))),
 ]
 // Tighter than a beat's four, because the learner is mid-decision: the board is
 // waiting for a tap and every extra bubble is a tap that is not the one they

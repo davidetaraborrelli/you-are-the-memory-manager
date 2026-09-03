@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Act1 } from '@/screens/Act1'
 import { Act2 } from '@/screens/Act2'
+import { Act3 } from '@/screens/Act3'
 import { SCREENS } from '@/lib/screens'
 import type { DeclaredRule } from '@/lib/types'
 
@@ -15,15 +16,16 @@ export default function App() {
 
   if (act === 1) return <Act1 onDone={() => setAct(2)} />
   if (act === 2) return <Act2 declared={declared} onDeclare={setDeclared} onDone={() => setAct(3)} />
+  if (act === 3) return <Act3 onDone={() => setAct(4)} />
   return <NotBuiltYet />
 }
 
 /**
  * Where the built lesson stops. Acts are built in order (see src/lib/screens.ts)
- * and screen 8 is next; until it exists the bridge at the end of screen 7 has
+ * and screen 9 is next; until it exists the bridge at the end of screen 8 has
  * somewhere honest to land instead of a button that does nothing.
  *
- * This is scaffolding, not lesson copy. It goes when act 4 arrives.
+ * This is scaffolding, not lesson copy. It goes when the last act arrives.
  */
 function NotBuiltYet() {
   const rest = SCREENS.filter((s) => !s.built)
