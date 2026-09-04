@@ -124,11 +124,18 @@ export function verdict(d: Decision, page: number): string[] {
   // Somebody else is further away. Which somebody depends on the fork: at the
   // second one a page never returns at all, and saying so points harder than
   // "even longer" without giving the page away.
+  //
+  // Neither branch says the tap scored worse, because at the first fork it does
+  // not: dropping page 2 there and page 1 at step 8 also finishes on 5, which is
+  // the floor. Belady's rule is optimal, not uniquely optimal. What this screen
+  // enforces is the rule, so the refusal asks for the rule, and never for an
+  // outcome the tape would contradict. Checked by exhaustive enumeration on L1;
+  // the second fork has no such tie.
   const anyNever = d.mem.some((m) => d.nextUse[String(m)] === null)
   return anyNever
     ? [`Page ${page} returns at step ${next}. Not bad, but one page here never returns at all.`]
     : [
-        `Page ${page} returns at step ${next}. Better, but one of the other pages stays away even longer. Keep looking.`,
+        `Page ${page} returns at step ${next}. That drop can still work out, but one page here stays away even longer. Keep looking for it.`,
       ]
 }
 
@@ -170,9 +177,16 @@ export const PROOF: { lines: string[]; focus: (Focus | null)[] } = {
  * The card under the proof, one stage per line of it.
  *
  * The bound is built in front of the learner rather than announced: the cold
- * misses, then the forced one, then the total beside what they actually scored.
- * `your run` is the counter's own number rather than a repeat of the floor, so
- * the two meeting is something the learner watches happen.
+ * misses, then the forced one, then what they actually scored beside the floor
+ * those two add up to. `your run` is the counter's own number rather than a
+ * repeat of the floor, so the two meeting is something the learner watches
+ * happen.
+ *
+ * The resolution used to carry an `at least` row as well, which is what the
+ * two rows above it had just added up to: the same 5 under a third name, one
+ * line below the floor it was restating. Three identical numbers read as a
+ * repetition rather than as a proof, and the one word doing the arguing got
+ * lost among them.
  */
 export function proofRows(stage: number, faults: number) {
   const rows = [
@@ -181,7 +195,6 @@ export function proofRows(stage: number, faults: number) {
   ]
   if (stage < 2) return rows.slice(0, stage + 1)
   return [
-    { id: 'atleast', label: 'at least', value: FLOOR.atLeast },
     { id: 'yours', label: 'your run', value: faults },
     { id: 'floor', label: 'floor', value: FLOOR.atLeast, emphasis: true },
   ]
@@ -234,12 +247,53 @@ export function whyFeedback(id: string): string[] {
 
 // ── Beat 6 · Change OPT's category ───────────────────────────────────────────
 
+/** The gap the beat is about, and the only number in it not on a counter. */
+const CLOSE = L2.scores.lru - L2.scores.opt
+
+/**
+ * The benchmark, and the announcement that it is about to be used on something.
+ *
+ * The second line exists because the beat changes tape. Level 2's numbers arrive
+ * under level 1's finished board, and anything that appears there unannounced
+ * reads as a correction of the floor just proved rather than as a different
+ * tape. A floor belongs to a tape, not to a rule, and this is where that has to
+ * survive contact.
+ */
 export const CATEGORY = [
-  'So OPT is not another live policy. It is our ruler: after a tape finishes, it tells us how low the fault count could have gone.',
-  `Now the last result means more. LRU used only the past and got within ${L2.scores.lru - L2.scores.opt} fault of perfect future knowledge.`,
+  'So OPT is not another algorithm to run. It is a benchmark: after a tape finishes, it tells us how good any algorithm could have been.',
+  "So now we can measure how our last run really did. Let's go back to level two for a moment, and I'll play that tape as OPT.",
 ]
 
-/** Screen 7's tape, re-priced against the ruler the learner just built. */
+/**
+ * What the demonstration was for.
+ *
+ * Level 2's floor is not asserted here. The machine replays that tape as OPT
+ * while the learner watches the counter, so the 6 this line names is a number
+ * they have just seen reached, the same way their own 5 was. Asserting it in a
+ * table would be the exact move the whole screen exists to take apart, one beat
+ * after taking it apart.
+ *
+ * It says *recency*, not *your result*. A learner who tested arrival order or
+ * frequency on screen 6 scored 9 on level 2, and this comparison is not about
+ * their run. Screen 7 hands recency to every learner as the rule that won, and
+ * this collects on that.
+ */
+export const MEASURED = [
+  `For this tape, OPT is ${L2.scores.opt}. LRU came within ${CLOSE} fault of perfect future knowledge.`,
+  'Not bad! As I said, exact recency is usually a strong practical bet. Now you have the proof.',
+]
+
+/**
+ * Screen 7's tape, priced against the benchmark the learner has just watched
+ * being taken.
+ *
+ * The caption is not decoration. These are level 2's numbers, and the learner
+ * proved a floor of 5 on level 1 two beats earlier; an unlabelled 6 says that
+ * proof was wrong. What the beat actually teaches is that a floor belongs to a
+ * tape.
+ */
+export const RULER_CAPTION = `level two, ${L2.frames} slots`
+
 export function rulerRows() {
   return [
     { id: 'lru', label: 'LRU', value: L2.scores.lru },
@@ -248,6 +302,6 @@ export function rulerRows() {
 }
 
 export const BRIDGE = [
-  'That makes exact recency worth having! Notice I used the term EXACT. Turns out, exact information comes at a price.',
-  "Let's go see what that price is.",
+  'That makes exact recency worth having. Notice I used the term EXACT. Turns out, exact information comes at a price.',
+  'And price, in computing, almost always means "resources". Let\'s see.',
 ]

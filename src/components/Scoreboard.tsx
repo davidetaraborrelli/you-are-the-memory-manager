@@ -11,11 +11,27 @@
  */
 export function Scoreboard({
   rows,
+  caption = null,
 }: {
   rows: { id: string; label: string; value: number | string; emphasis?: boolean }[]
+  /**
+   * Which run these numbers are from.
+   *
+   * Optional, and needed exactly where a table prices a tape other than the
+   * one on the board. Screen 8 ends by putting level 2's scores under level
+   * 1's finished run: a floor of 5 has just been proved on the strip above,
+   * and an unlabelled 6 underneath reads as a correction of it rather than
+   * as a different tape. The floor belongs to the tape, not to the rule.
+   */
+  caption?: string | null
 }) {
   return (
     <table className="w-full border-collapse text-sm">
+      {caption && (
+        <caption className="pb-2 text-left font-mono text-[10px] uppercase tracking-widest text-ink-faint">
+          {caption}
+        </caption>
+      )}
       <tbody>
         {rows.map((r) => (
           <tr key={r.id} className="border-t border-edge first:border-t-0">

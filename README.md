@@ -1,7 +1,6 @@
 # You are the memory manager
 
-An interactive lesson on page replacement. Fourteen screens, 9–12 minutes, no
-backend.
+An interactive lesson on page replacement. Fourteen screens, no backend.
 
 ```bash
 npm install

@@ -8,7 +8,7 @@ import { Scoreboard } from '@/components/Scoreboard'
 import { ProgressBar } from '@/components/ProgressBar'
 import { L2 } from '@/lib/levels'
 import { advance, createGame, isDone, resolve, swappedOut, tileStats } from '@/lib/game'
-import { learnerCommitted, resetMachine, setMachineState } from '@/lib/machine'
+import { learnerCommitted, machineGate, resetMachine, setMachineState } from '@/lib/machine'
 import type { Focus } from '@/lib/act1'
 
 /** The three regions of the board a line can be lit against. */
@@ -201,6 +201,10 @@ export function Act2({
   const showBoard = phase === 'intro' || phase === 'pick-signal' || phase === 'play' || scoring
   const last = game.events[game.events.length - 1]
   const screen = phase === 'ask' || phase === 'feedback' ? 5 : scoring ? 7 : 6
+
+  // The tell rule, scoped to the screen rather than to the act. Declared after
+  // the effect that sets the face on purpose: see machineGate.
+  useEffect(() => machineGate(`act2:${screen}`), [screen])
   const testing = rule ? SIGNAL_OPTIONS.find((o) => o.id === rule)!.label.toLowerCase() : null
 
   return (

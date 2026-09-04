@@ -9,8 +9,9 @@
     "preview": "vite preview",
     "data": "python tools/gen_levels.py",
     "test:data": "python tools/sim.py",
+    "test:gen": "python tools/gen_levels.py --check",
     "test:engine": "node --experimental-strip-types --no-warnings tools/check_engine.ts",
-    "test": "npm run test:data && npm run test:engine"
+    "test": "npm run test:data && npm run test:gen && npm run test:engine"
   },
   "dependencies": {
     "react": "^19.1.0",

@@ -14,6 +14,12 @@ import { createGame, advance, resolve, isDone, credit } from '../src/lib/game.ts
 import { BEATS, ambientFor, beatLines, endCard } from '../src/lib/act1.ts'
 import * as act2 from '../src/lib/act2.ts'
 import * as act3 from '../src/lib/act3.ts'
+import {
+  learnerCommitted,
+  machineGate,
+  resetMachine,
+  tellRuleBroken,
+} from '../src/lib/machine.ts'
 import type { Game } from '../src/lib/game.ts'
 import type { LevelData, Step } from '../src/lib/types.ts'
 // Imported directly rather than through src/lib/levels.ts: that module uses the
@@ -47,6 +53,80 @@ function replay(ref: number[], frameCount: number, steps: Step[]) {
   return { faults: g.faults, regrets, credit: credit(g), frames: g.frames }
 }
 
+/**
+ * Every transition of a trace, checked against the one before it.
+ *
+ * `replay` above reads exactly one field, `slot`, and compares the totals that
+ * come out. That is a real check of the engine and none at all of the trace: a
+ * committed levels.json whose intermediate `page`, `victim`, `frames` or `bits`
+ * had been edited passed it unchanged. `npm run test:gen` now catches that by
+ * rebuilding the file from the generator; this catches it a second way, and a
+ * different way, because the two fail for different reasons. test:gen says the
+ * bytes are not what Python produces. This says the record does not describe a
+ * memory that could exist.
+ *
+ * Deliberately policy-agnostic. The front end never re-implements FIFO, LRU,
+ * clock or OPT and neither does its test suite: the oracle owns *which* page
+ * leaves, this owns whether the record of it is coherent. A step's frames have
+ * to follow from the step before plus what the step says it did, and nothing
+ * here needs to know why the victim was chosen.
+ *
+ * Screen 12 is why it exists. Its whole argument is a sequence of intermediate
+ * states, so an unverified intermediate state there is a false claim made in
+ * front of the learner. When the clock traces gain handBefore, scanned and
+ * handAfter, they get checked here too.
+ */
+function traceViolations(ref: number[], frameCount: number, steps: Step[]): string[] {
+  const bad: string[] = []
+  const say = (i: number, msg: string) => bad.push(`step ${i + 1}: ${msg}`)
+
+  if (steps.length !== ref.length) bad.push(`${steps.length} steps for ${ref.length} requests`)
+
+  let prev: (number | null)[] = Array(frameCount).fill(null)
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i]
+    if (s.step !== i + 1) say(i, `numbered ${s.step}`)
+    if (s.page !== ref[i]) say(i, `page ${s.page}, but the tape asks for ${ref[i]}`)
+
+    if (s.frames.length !== frameCount) {
+      say(i, `${s.frames.length} frames, not ${frameCount}`)
+      prev = s.frames
+      continue
+    }
+    if (s.slot < 0 || s.slot >= frameCount) {
+      say(i, `slot ${s.slot} is outside the memory`)
+      prev = s.frames
+      continue
+    }
+
+    if (s.frames[s.slot] !== s.page) say(i, `page ${s.page} is not in slot ${s.slot} afterwards`)
+    for (let f = 0; f < frameCount; f++) {
+      if (f !== s.slot && s.frames[f] !== prev[f]) {
+        say(i, `slot ${f} changed, but this step touched slot ${s.slot}`)
+      }
+    }
+
+    if (s.outcome === 'hit') {
+      if (prev[s.slot] !== s.page) say(i, `hit on ${s.page}, but slot ${s.slot} held ${prev[s.slot]}`)
+      if (s.victim !== null) say(i, `a hit cannot have victim ${s.victim}`)
+    } else if (s.outcome === 'fill') {
+      if (prev[s.slot] !== null) say(i, `filled slot ${s.slot}, which held ${prev[s.slot]}`)
+      if (s.victim !== null) say(i, `a fill cannot have victim ${s.victim}`)
+    } else {
+      if (prev[s.slot] === null) say(i, `evicted from slot ${s.slot}, which was empty`)
+      else if (s.victim !== prev[s.slot]) say(i, `victim ${s.victim}, but slot ${s.slot} held ${prev[s.slot]}`)
+    }
+
+    if (s.bits) {
+      if (s.bits.length !== frameCount) say(i, `${s.bits.length} bits for ${frameCount} frames`)
+      if (s.bits.some((b) => b !== 0 && b !== 1)) say(i, `bits ${JSON.stringify(s.bits)}`)
+    }
+
+    prev = s.frames
+  }
+  return bad
+}
+
 console.log('engine vs sim.py\n')
 
 for (const key of ['l1', 'l2', 'l3'] as const) {
@@ -66,6 +146,24 @@ for (const policy of ['clock', 'lru', 'fifo', 'opt'] as const) {
   for (const size of ['small', 'big'] as const) {
     const r = replay(data.belady.ref, run[size].frames, run[size].steps)
     check(`belady ${policy} @${run[size].frames}`, r.faults, run[size].faults)
+  }
+}
+
+console.log('\nevery transition of every trace')
+for (const key of ['l1', 'l2', 'l3'] as const) {
+  const lvl = data.levels[key]
+  for (const [policy, steps] of Object.entries(lvl.traces)) {
+    check(`${key} ${policy} is coherent step by step`, traceViolations(lvl.ref, lvl.frames, steps), [])
+  }
+}
+for (const policy of ['clock', 'lru', 'fifo', 'opt'] as const) {
+  const run = data.belady.runs[policy]
+  for (const size of ['small', 'big'] as const) {
+    check(
+      `belady ${policy} @${run[size].frames} is coherent step by step`,
+      traceViolations(data.belady.ref, run[size].frames, run[size].steps),
+      [],
+    )
   }
 }
 
@@ -240,10 +338,13 @@ console.log('\nthe floor is proved, not asserted')
   // floor in for both would make the two meeting a foregone conclusion.
   const rows = act3.proofRows(2, levelOne.scores.opt)
   check(
-    'the card prices the bound',
+    'the card ends on the run beside the floor',
     rows.map((r) => r.value),
-    [fl.atLeast, levelOne.scores.opt, fl.atLeast],
+    [levelOne.scores.opt, fl.atLeast],
   )
+  // And says each number once. The rows above it already add up to the bound,
+  // so a third row restating the total is the same 5 under a third name.
+  check('and says each number once', rows.map((r) => r.label), ['your run', 'floor'])
   check('and it is the floor that is marked', rows.filter((r) => r.emphasis).map((r) => r.id), [
     'floor',
   ])
@@ -282,9 +383,36 @@ console.log('\nOPT is named after it has been played, and priced after that')
   )
   check(
     'and the gap the voice quotes is the one in the table',
-    act3.CATEGORY.join(' ').includes(String(levelTwo.scores.lru - levelTwo.scores.opt)),
+    act3.MEASURED.join(' ').includes(String(levelTwo.scores.lru - levelTwo.scores.opt)),
     true,
   )
+  // Level 2's floor is demonstrated, not asserted. The machine replays that tape
+  // as OPT from the oracle's own trace while the learner watches the counter, so
+  // what the counter reaches has to be the number the voice then says out loud.
+  // Quoting a 6 the learner never saw arrive would be, one beat after teaching
+  // them to demand a proof, the move the whole screen exists to take apart.
+  {
+    const shown = replay(levelTwo.ref, levelTwo.frames, levelTwo.traces.opt!)
+    check('the level two demonstration reaches its floor', shown.faults, levelTwo.scores.opt)
+    check(
+      'and the voice quotes what the counter reached',
+      act3.MEASURED.join(' ').includes(String(levelTwo.scores.opt)),
+      true,
+    )
+  }
+  // These are level 2's numbers under level 1's finished board, and the learner
+  // has just proved a floor of 5 on the strip above them. An unlabelled 6 there
+  // reads as a correction of the proof instead of as another tape, so the table
+  // names its run and so does the sentence beside it.
+  check('the ruler table names the tape it prices', /level two/i.test(act3.RULER_CAPTION), true)
+  check('and so does the voice', /level two/i.test(act3.CATEGORY.join(' ')), true)
+  // And says so before it uses the numbers, or the table has already changed
+  // tape by the time the learner is told there was another tape.
+  const beat6 = [...act3.CATEGORY, ...act3.MEASURED]
+  const gap = String(levelTwo.scores.lru - levelTwo.scores.opt)
+  const announced = beat6.findIndex((l) => /level two/i.test(l))
+  const used = beat6.findIndex((l) => l.includes(gap))
+  check('the change of tape is announced before it is used', announced >= 0 && announced < used, true)
 }
 
 // -- pacing -----------------------------------------------------------------
@@ -323,6 +451,7 @@ const act3Groups: { id: string; lines: string[]; focus?: unknown[] }[] = [
   { id: 'why-not', lines: act3.WHY_NOT },
   ...act3.WHY_OPTIONS.map((o) => ({ id: `why:${o.id}`, lines: act3.whyFeedback(o.id) })),
   { id: 'category', lines: act3.CATEGORY },
+  { id: 'measured', lines: act3.MEASURED },
   { id: 'the-price', lines: act3.BRIDGE },
 ]
 
@@ -586,6 +715,55 @@ const marked = [...firstOfEachBranch.values()]
 
 const repeated = marked.filter((term, i) => marked.indexOf(term) !== i)
 check(`key terms highlighted once each${marked.length ? ` (${marked.join(', ')})` : ''}`, repeated, [])
+
+// -- the tell rule ----------------------------------------------------------
+// The machine's face may only react to something the learner has already done.
+// The check lives in setMachineState as a development warning, which means it
+// is never exercised by anything that runs in CI, which is how it managed to
+// stop enforcing without anyone noticing: the commit flag was cleared only when
+// an act mounted, and acts hold several screens, so the first commit of an act
+// armed the rule for every screen after it.
+//
+// tellRuleBroken is that condition, exported so it can be asserted here. These
+// are the module's semantics, not the components': whether a real screen ever
+// trips it is a question for the dev server. What this pins is that the rule
+// is capable of tripping at all, once per gate, which is what stopped being
+// true.
+
+console.log('\nthe tell rule is per gate, not per act')
+{
+  resetMachine()
+  machineGate('screen:1')
+  check('a face before any commit breaks the rule', tellRuleBroken('approval'), true)
+  check('neutral never breaks it', tellRuleBroken('neutral'), false)
+
+  learnerCommitted()
+  check('and after a commit it does not', tellRuleBroken('approval'), false)
+
+  // The regression. Before machineGate existed this stayed false for the rest
+  // of the act, so every later screen could set any face it liked in silence.
+  machineGate('screen:2')
+  check('a new screen disarms it again', tellRuleBroken('approval'), true)
+
+  learnerCommitted()
+  machineGate('screen:2')
+  check('re-opening the same gate is a no-op', tellRuleBroken('approval'), false)
+
+  // Act 1's shape, which is the one that has to stay lenient: the learner
+  // commits on one screen, and the beat that fires afterwards opens the next
+  // one. Effects run in declaration order and the gate is declared last, so
+  // that beat's face is still judged against the screen the commit happened
+  // on. Approving a decision the learner has already made is not a tell.
+  resetMachine()
+  machineGate('act1:2')
+  learnerCommitted()
+  check('a beat that closes a screen may still show a face', tellRuleBroken('approval'), false)
+  machineGate('act1:3')
+  check('but the screen it opens starts disarmed', tellRuleBroken('approval'), true)
+
+  resetMachine()
+  check('and resetMachine still clears everything', tellRuleBroken('approval'), true)
+}
 
 console.log(failures === 0 ? '\nengine agrees with the oracle' : `\n${failures} disagreement(s)`)
 process.exit(failures === 0 ? 0 : 1)

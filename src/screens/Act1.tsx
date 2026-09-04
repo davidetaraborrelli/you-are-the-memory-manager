@@ -6,7 +6,7 @@ import { Bubble } from '@/components/Bubble'
 import { ProgressBar } from '@/components/ProgressBar'
 import { L1 } from '@/lib/levels'
 import { advance, createGame, isDone, resolve, swappedOut } from '@/lib/game'
-import { learnerCommitted, resetMachine, setMachineState } from '@/lib/machine'
+import { learnerCommitted, machineGate, resetMachine, setMachineState } from '@/lib/machine'
 import { BEATS, ambientFor, beatLines, beatMachine, endCard, type Beat, type Focus } from '@/lib/act1'
 
 /** The three regions of the board a line can be lit against. */
@@ -138,6 +138,10 @@ export function Act1({ onDone }: { onDone: () => void }) {
 
   useEffect(() => setLineIdx(0), [groupKey])
   const screen = beat?.screen ?? (seen.length ? BEATS.find((b) => b.id === seen[seen.length - 1])!.screen : 1)
+
+  // The tell rule, scoped to the screen rather than to the act. Declared after
+  // the effect that sets the face on purpose: see machineGate.
+  useEffect(() => machineGate(`act1:${screen}`), [screen])
   const done = isDone(game)
   const card = done ? endCard(game) : null
 
