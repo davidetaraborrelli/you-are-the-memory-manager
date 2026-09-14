@@ -18,6 +18,8 @@ export function Tape({
   lit = false,
   fit = false,
   markSteps = null,
+  onSelect,
+  selectionDisabled = false,
 }: {
   tape: number[]
   /** Index of the request being served right now. */
@@ -48,11 +50,21 @@ export function Tape({
    * four particular requests is drawn as four particular requests.
    */
   markSteps?: number[] | null
+  /** Completed-run inspector, using 1-based post-request positions. */
+  onSelect?: (step: number) => void
+  selectionDisabled?: boolean
 }) {
   const marks = markSteps ?? []
 
   /** One request. Identical in both layouts except for how wide it may be. */
   const cell = (page: number, i: number) => {
+    if (onSelect) return <button key={i} type="button" disabled={selectionDisabled}
+      onClick={() => onSelect(i + 1)} aria-label={`After request ${i + 1}, page ${page}`}
+      aria-pressed={i === cursor}
+      className={`flex min-h-11 flex-col items-center justify-center rounded-md font-mono text-sm ${i === cursor ? 'ring-2 ring-focus ring-offset-2 ring-offset-ground font-semibold' : ''}`}
+      style={{ background: pageColor(page), color: 'var(--color-ground)' }}>
+      <span className="text-[9px]">{i + 1}</span><span>{page}</span>
+    </button>
     const past = !fit && i < cursor
     const now = !fit && i === cursor
     const hidden = i > cursor && !reveal
@@ -93,7 +105,7 @@ export function Tape({
       >
         requests
       </p>
-      {fit ? (
+      {onSelect ? <div className="grid grid-cols-4 gap-2 py-3 sm:grid-cols-12">{tape.map(cell)}</div> : fit ? (
         <div
           className="grid gap-1 py-3"
           style={{ gridTemplateColumns: `repeat(${tape.length}, minmax(0, 1fr))` }}

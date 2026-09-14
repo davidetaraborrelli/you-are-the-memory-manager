@@ -3,7 +3,8 @@
 sim.py answers "how many faults"; the interface also needs to know *which slot*
 held *which page* at every step, because it draws three tiles in fixed
 positions. So the simulators here are slot-accurate: same algorithms, but they
-record the frame array rather than a set.
+record the frame array rather than a set. Clock's full events come directly
+from sim.clock_events(), including the scan that produces each result.
 
 Correctness is not taken on trust. verify_against_sim() re-derives every fault
 count from these traces and asserts it matches sim.py, and sim.verify() asserts
@@ -35,10 +36,13 @@ OUT = ROOT / "src" / "data" / "levels.json"
 #   victim   the page that was thrown out, or None
 #   frames   the frame array *after* this request (None = empty slot)
 #   bits     the use bits after this request (clock only)
+#   handBefore / handAfter  zero-based hand positions (clock only)
+#   scanned  inspected slots, including the final zero-bit victim; empty on
+#            hits/fills, with a repeated starting slot after a full sweep
 
 
-def _step(i, page, outcome, slot, victim, frames, bits=None):
-    s = {
+def _step(i, page, outcome, slot, victim, frames):
+    return {
         "step": i + 1,
         "page": page,
         "outcome": outcome,
@@ -46,9 +50,6 @@ def _step(i, page, outcome, slot, victim, frames, bits=None):
         "victim": victim,
         "frames": list(frames),
     }
-    if bits is not None:
-        s["bits"] = list(bits)
-    return s
 
 
 def trace_fifo(ref, n):
@@ -95,28 +96,8 @@ def trace_lru(ref, n):
 
 
 def trace_clock(ref, n):
-    frames, bits, hand, steps = [None] * n, [0] * n, 0, []
-    for i, p in enumerate(ref):
-        if p in frames:
-            slot = frames.index(p)
-            bits[slot] = 1
-            steps.append(_step(i, p, "hit", slot, None, frames, bits))
-            continue
-        if None in frames:
-            slot = frames.index(None)
-            frames[slot] = p
-            bits[slot] = 1
-            steps.append(_step(i, p, "fill", slot, None, frames, bits))
-        else:
-            while bits[hand] == 1:
-                bits[hand] = 0
-                hand = (hand + 1) % n
-            slot, victim = hand, frames[hand]
-            frames[slot] = p
-            bits[slot] = 1
-            hand = (hand + 1) % n
-            steps.append(_step(i, p, "evict", slot, victim, frames, bits))
-    return steps
+    # One canonical source for both residency and the intermediate scans.
+    return sim.clock_events(ref, n)
 
 
 def trace_opt(ref, n):
@@ -255,6 +236,8 @@ def floor(ref, frames):
 def build():
     data = {
         "generatedBy": "tools/gen_levels.py - do not edit by hand",
+        "recencyDemo": sim.recency_demo(),
+        "clockQuickCheck": sim.clock_quick_check(),
         "levels": {
             "l1": level("l1", sim.L1, 3, ["fifo", "lru", "opt"], "Playing blind"),
             "l2": level("l2", sim.L2, 3, ["fifo", "lru", "opt"], "Recency gets easy"),
@@ -282,12 +265,19 @@ def build():
 
 
 def verify_against_sim(data):
-    """Every fault count the UI will show, re-derived from the traces here and
-    checked against sim.py. If a trace is subtly wrong, this catches it."""
+    """Check totals, complete Clock events and the storyboard's key states."""
     for key, lvl in data["levels"].items():
         for policy, steps in lvl["traces"].items():
             got, want = faults(steps), lvl["scores"][policy]
             assert got == want, f"{key}/{policy}: trace says {got}, sim says {want}"
+            if policy == "clock":
+                assert steps == sim.clock_events(lvl["ref"], lvl["frames"]), \
+                    f"{key}/clock: events differ from the oracle"
+
+    for size in ("small", "big"):
+        run = data["belady"]["runs"]["clock"][size]
+        assert run["steps"] == sim.clock_events(data["belady"]["ref"], run["frames"]), \
+            f"belady/clock/{size}: events differ from the oracle"
 
     # The storyboard's headline numbers, asserted in the shape the UI reads them.
     s1, s2, s3 = (data["levels"][k]["scores"] for k in ("l1", "l2", "l3"))

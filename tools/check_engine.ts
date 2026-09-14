@@ -21,7 +21,7 @@ import {
   tellRuleBroken,
 } from '../src/lib/machine.ts'
 import type { Game } from '../src/lib/game.ts'
-import type { LevelData, Step } from '../src/lib/types.ts'
+import type { ClockStep, LevelData, Step } from '../src/lib/types.ts'
 // Imported directly rather than through src/lib/levels.ts: that module uses the
 // '@/' alias, which Vite resolves and bare Node does not.
 import raw from '../src/data/levels.json' with { type: 'json' }
@@ -73,10 +73,10 @@ function replay(ref: number[], frameCount: number, steps: Step[]) {
  *
  * Screen 12 is why it exists. Its whole argument is a sequence of intermediate
  * states, so an unverified intermediate state there is a false claim made in
- * front of the learner. When the clock traces gain handBefore, scanned and
- * handAfter, they get checked here too.
+ * front of the learner. Clock's recorded inspections get an additional check
+ * below: apply each supplied event, without searching for a victim ourselves.
  */
-function traceViolations(ref: number[], frameCount: number, steps: Step[]): string[] {
+function traceViolations(ref: number[], frameCount: number, steps: Step[], policy: string): string[] {
   const bad: string[] = []
   const say = (i: number, msg: string) => bad.push(`step ${i + 1}: ${msg}`)
 
@@ -93,7 +93,7 @@ function traceViolations(ref: number[], frameCount: number, steps: Step[]): stri
       prev = s.frames
       continue
     }
-    if (s.slot < 0 || s.slot >= frameCount) {
+    if (!Number.isInteger(s.slot) || s.slot < 0 || s.slot >= frameCount) {
       say(i, `slot ${s.slot} is outside the memory`)
       prev = s.frames
       continue
@@ -112,9 +112,14 @@ function traceViolations(ref: number[], frameCount: number, steps: Step[]): stri
     } else if (s.outcome === 'fill') {
       if (prev[s.slot] !== null) say(i, `filled slot ${s.slot}, which held ${prev[s.slot]}`)
       if (s.victim !== null) say(i, `a fill cannot have victim ${s.victim}`)
-    } else {
+      if (prev.includes(s.page)) say(i, `filled page ${s.page}, which was already resident`)
+    } else if (s.outcome === 'evict') {
       if (prev[s.slot] === null) say(i, `evicted from slot ${s.slot}, which was empty`)
       else if (s.victim !== prev[s.slot]) say(i, `victim ${s.victim}, but slot ${s.slot} held ${prev[s.slot]}`)
+      if (prev.includes(null)) say(i, 'evicted before memory was full')
+      if (prev.includes(s.page)) say(i, `evicted for page ${s.page}, which was already resident`)
+    } else {
+      say(i, `unknown outcome ${s.outcome}`)
     }
 
     if (s.bits) {
@@ -123,6 +128,68 @@ function traceViolations(ref: number[], frameCount: number, steps: Step[]): stri
     }
 
     prev = s.frames
+  }
+  return policy === 'clock' ? [...bad, ...clockTraceViolations(frameCount, steps)] : bad
+}
+
+/** Validate Clock's supplied scan events; this never computes a scan path. */
+function clockTraceViolations(frameCount: number, steps: Step[]): string[] {
+  const bad: string[] = []
+  const slotInMemory = (slot: unknown): slot is number =>
+    typeof slot === 'number' && Number.isInteger(slot) && slot >= 0 && slot < frameCount
+  let frames: (number | null)[] = Array(frameCount).fill(null)
+  let bits: number[] = Array(frameCount).fill(0)
+  let hand = 0
+
+  for (let i = 0; i < steps.length; i++) {
+    // levels.json crosses a runtime boundary. Clock fields are required even
+    // when somebody removes all of them and leaves an otherwise valid Step.
+    const s: Partial<ClockStep> & Step = steps[i]
+    const say = (msg: string) => bad.push(`step ${i + 1}: clock ${msg}`)
+    const validBits = Array.isArray(s.bits) && s.bits.length === frameCount &&
+      s.bits.every((bit) => bit === 0 || bit === 1)
+    const validBefore = slotInMemory(s.handBefore)
+    const validAfter = slotInMemory(s.handAfter)
+    const validScan = Array.isArray(s.scanned) && s.scanned.every(slotInMemory)
+    if (!validBits) say('requires one binary bit per frame')
+    if (!validBefore) say('requires handBefore to be a slot in memory')
+    if (!validAfter) say('requires handAfter to be a slot in memory')
+    if (!validScan) say('requires scanned to be an array of slots in memory')
+
+    if (validBefore && s.handBefore !== hand) say(`handBefore ${s.handBefore} does not continue hand ${hand}`)
+    const afterBits = [...bits]
+    if (s.outcome === 'hit' || s.outcome === 'fill') {
+      if (validScan && s.scanned!.length !== 0) say(`${s.outcome} must not scan`)
+      if (validBefore && validAfter && s.handBefore !== s.handAfter) say(`${s.outcome} moved the hand`)
+      if (s.outcome === 'fill' && s.slot !== frames.indexOf(null)) say('fill must use the first empty slot')
+    } else if (s.outcome === 'evict') {
+      if (validScan) {
+        const scanned = s.scanned!
+        if (scanned.length === 0) say('eviction has no victim inspection')
+        if (scanned.length > frameCount + 1) say('scan exceeds one full pass plus the victim')
+        for (let j = 0; j < scanned.length; j++) {
+          const slot = scanned[j]
+          if (j === 0 && validBefore && slot !== s.handBefore) say('scan does not start at handBefore')
+          if (j > 0 && slot !== (scanned[j - 1] + 1) % frameCount) say('scan skips or reverses a slot')
+          if (j === scanned.length - 1) {
+            if (afterBits[slot] !== 0) say('final inspection must find a zero bit')
+            if (slot !== s.slot) say('final inspection does not identify the victim slot')
+          } else {
+            if (afterBits[slot] !== 1) say('scan continued past a zero bit')
+            afterBits[slot] = 0
+          }
+        }
+      }
+      if (validAfter && s.handAfter !== (s.slot + 1) % frameCount) say('handAfter is not after the victim')
+    }
+
+    if (slotInMemory(s.slot)) afterBits[s.slot] = 1
+    if (validBits && JSON.stringify(s.bits) !== JSON.stringify(afterBits)) say('bits do not follow the inspections and request')
+    // Use the recorded end state as the next record's starting state, just as
+    // the generic residency check does. A bad event is already reported above.
+    if (validBits) bits = s.bits!
+    if (validAfter) hand = s.handAfter!
+    frames = s.frames
   }
   return bad
 }
@@ -153,7 +220,7 @@ console.log('\nevery transition of every trace')
 for (const key of ['l1', 'l2', 'l3'] as const) {
   const lvl = data.levels[key]
   for (const [policy, steps] of Object.entries(lvl.traces)) {
-    check(`${key} ${policy} is coherent step by step`, traceViolations(lvl.ref, lvl.frames, steps), [])
+    check(`${key} ${policy} is coherent step by step`, traceViolations(lvl.ref, lvl.frames, steps, policy), [])
   }
 }
 for (const policy of ['clock', 'lru', 'fifo', 'opt'] as const) {
@@ -161,10 +228,61 @@ for (const policy of ['clock', 'lru', 'fifo', 'opt'] as const) {
   for (const size of ['small', 'big'] as const) {
     check(
       `belady ${policy} @${run[size].frames} is coherent step by step`,
-      traceViolations(data.belady.ref, run[size].frames, run[size].steps),
+      traceViolations(data.belady.ref, run[size].frames, run[size].steps, policy),
       [],
     )
   }
+}
+
+console.log('\nclock events remain checked when the fault total is unchanged')
+{
+  // Explicit events exercise fills, all-ones wraparound, a hit restoring a
+  // cleared bit, immediate zero-bit eviction, and a shorter mixed-bit scan.
+  const ref = [1, 2, 3, 4, 3, 5, 6, 4, 7]
+  const steps: ClockStep[] = [
+    { step: 1, page: 1, outcome: 'fill', slot: 0, victim: null, frames: [1, null, null], bits: [1, 0, 0], handBefore: 0, scanned: [], handAfter: 0 },
+    { step: 2, page: 2, outcome: 'fill', slot: 1, victim: null, frames: [1, 2, null], bits: [1, 1, 0], handBefore: 0, scanned: [], handAfter: 0 },
+    { step: 3, page: 3, outcome: 'fill', slot: 2, victim: null, frames: [1, 2, 3], bits: [1, 1, 1], handBefore: 0, scanned: [], handAfter: 0 },
+    { step: 4, page: 4, outcome: 'evict', slot: 0, victim: 1, frames: [4, 2, 3], bits: [1, 0, 0], handBefore: 0, scanned: [0, 1, 2, 0], handAfter: 1 },
+    { step: 5, page: 3, outcome: 'hit', slot: 2, victim: null, frames: [4, 2, 3], bits: [1, 0, 1], handBefore: 1, scanned: [], handAfter: 1 },
+    { step: 6, page: 5, outcome: 'evict', slot: 1, victim: 2, frames: [4, 5, 3], bits: [1, 1, 1], handBefore: 1, scanned: [1], handAfter: 2 },
+    { step: 7, page: 6, outcome: 'evict', slot: 2, victim: 3, frames: [4, 5, 6], bits: [0, 0, 1], handBefore: 2, scanned: [2, 0, 1, 2], handAfter: 0 },
+    { step: 8, page: 4, outcome: 'hit', slot: 0, victim: null, frames: [4, 5, 6], bits: [1, 0, 1], handBefore: 0, scanned: [], handAfter: 0 },
+    { step: 9, page: 7, outcome: 'evict', slot: 1, victim: 5, frames: [4, 7, 6], bits: [0, 1, 1], handBefore: 0, scanned: [0, 1], handAfter: 2 },
+  ]
+  check('the complete event fixture is coherent', traceViolations(ref, 3, steps, 'clock'), [])
+
+  const corruptions: [string, (trace: ClockStep[]) => void][] = [
+    ['a reset hand', (trace) => { trace[4].handBefore = 0; trace[4].handAfter = 0 }],
+    ['a hand that stays on the victim', (trace) => { trace[3].handAfter = 0 }],
+    ['an out-of-range hand', (trace) => { trace[0].handBefore = 3 }],
+    ['a fractional scan slot', (trace) => { trace[3].scanned[1] = 0.5 }],
+    ['a scan that skips a slot', (trace) => { trace[3].scanned = [0, 2, 1, 0] }],
+    ['a scan that starts away from the hand', (trace) => { trace[3].scanned = [1, 2, 0] }],
+    ['a scan without the final victim inspection', (trace) => { trace[3].scanned.pop() }],
+    ['a scan that continues past zero', (trace) => { trace[5].scanned = [1, 2, 0, 1] }],
+    ['an inspection on a hit', (trace) => { trace[4].scanned = [1] }],
+    ['a hit that fails to restore its bit', (trace) => { trace[4].bits[2] = 0 }],
+    ['a skipped bit that was not cleared', (trace) => { trace[3].bits[1] = 1 }],
+    ['an uninspected bit that was cleared', (trace) => { trace[8].bits[2] = 0 }],
+    ['a frame changed outside the victim slot', (trace) => { trace[3].frames[1] = 9 }],
+    ['an eviction with empty memory', (trace) => { trace[0].outcome = 'evict' }],
+    ...(['bits', 'handBefore', 'scanned', 'handAfter'] as const).map((field): [string, (trace: ClockStep[]) => void] => [
+      `missing ${field}`,
+      (trace) => { delete (trace[3] as Partial<ClockStep>)[field] },
+    ]),
+  ]
+  const faults = steps.filter((s) => s.outcome !== 'hit').length
+  const accepted: string[] = []
+  const changedTotals: string[] = []
+  for (const [name, corrupt] of corruptions) {
+    const changed = structuredClone(steps)
+    corrupt(changed)
+    if (traceViolations(ref, 3, changed, 'clock').length === 0) accepted.push(name)
+    if (replay(ref, 3, changed).faults !== faults) changedTotals.push(name)
+  }
+  check('every corrupt event trace is rejected', accepted, [])
+  check('fault totals alone would accept every corruption', changedTotals, [])
 }
 
 console.log('\nfeedback mechanics on level 1, played as LRU')
@@ -345,7 +463,7 @@ console.log('\nthe floor is proved, not asserted')
   // And says each number once. The rows above it already add up to the bound,
   // so a third row restating the total is the same 5 under a third name.
   check('and says each number once', rows.map((r) => r.label), ['your run', 'floor'])
-  check('and it is the floor that is marked', rows.filter((r) => r.emphasis).map((r) => r.id), [
+  check('and it is the floor that is marked', rows.filter((r) => 'emphasis' in r && r.emphasis).map((r) => r.id), [
     'floor',
   ])
   check(

@@ -29,6 +29,25 @@ export interface Step {
   victim_next_use?: number | null
 }
 
+/** Clock's recorded actions, in the order the UI must show them. */
+export interface ClockStep extends Step {
+  /** Reference bits after this request, one per frame. */
+  bits: number[]
+  /** 0-based position of the persistent hand before this request. */
+  handBefore: number
+  /**
+   * 0-based slots inspected, including the final zero-bit victim. A skipped
+   * one-bit slot is cleared when inspected. Empty on hits and initial fills.
+   * An all-ones memory can revisit the first slot: [0, 1, 2, 0].
+   */
+  scanned: number[]
+  /** Next search starts here; unchanged on hits and initial fills. */
+  handAfter: number
+}
+
+export type PolicyStep<P extends Policy> = P extends 'clock' ? ClockStep : Step
+export type PolicyTraces = { [P in Policy]?: PolicyStep<P>[] }
+
 export interface Scores {
   fifo: number
   lru: number
@@ -122,7 +141,7 @@ export interface Level {
   pages: number[]
   length: number
   scores: Scores
-  traces: Partial<Record<Policy, Step[]>>
+  traces: PolicyTraces
   /** Null on tapes whose first eviction is not diagnostic. */
   fork: Fork | null
   /** Every fork of a face-up replay, in order. Screen 8 plays L1's two. */
@@ -130,21 +149,31 @@ export interface Level {
   floor: Floor
 }
 
-export interface BeladyRun {
-  small: { frames: number; faults: number; steps: Step[] }
-  big: { frames: number; faults: number; steps: Step[] }
+export interface BeladyRun<P extends Policy = Policy> {
+  small: { frames: number; faults: number; steps: PolicyStep<P>[] }
+  big: { frames: number; faults: number; steps: PolicyStep<P>[] }
   /** 1-based steps where the small memory holds a page the big one has dropped. */
   leakSteps: number[]
 }
 
 export interface LevelData {
   generatedBy: string
+  clockQuickCheck: {
+    initialFrames: number[]
+    initialBits: number[]
+    ref: number[]
+    steps: ClockStep[]
+  }
+  recencyDemo: {
+    frames: number[]
+    snapshots: { step: number; page: number; lastUsed: number[] }[]
+  }
   levels: Record<'l1' | 'l2' | 'l3', Level>
   belady: {
     ref: number[]
     pages: number[]
     length: number
-    runs: Record<Policy, BeladyRun>
+    runs: { [P in Policy]: BeladyRun<P> }
   }
 }
 

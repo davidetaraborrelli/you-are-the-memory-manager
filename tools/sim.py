@@ -217,19 +217,85 @@ def trace_lru(ref, n):
         out.append(frozenset(mem))
     return out
 
-def trace_clock(ref, n):
-    frames, bits, hand, out = [], [], 0, []
-    for p in ref:
-        if p in frames:
-            bits[frames.index(p)] = 1
-        elif len(frames) < n:
-            frames.append(p); bits.append(1)
+def clock_events(ref, n, *, initial_frames=None, initial_bits=None, initial_hand=0):
+    """Canonical Clock transitions for the guided scan and causal replay.
+
+    Slots and hand positions are zero-based; request steps are one-based.
+    `scanned` includes the final inspection of the zero-bit victim, so an
+    all-ones sweep visits its starting slot twice. Hits and fills never scan
+    or move the hand. `frames` and `bits` are snapshots after the request;
+    the previous event supplies the state before it (initially empty/zero).
+
+    The generator exports these events directly. The UI consumes their scan
+    order rather than running a second implementation of the policy.
+    """
+    if n < 1:
+        raise ValueError('Clock requires at least one frame')
+    frames = list(initial_frames) if initial_frames is not None else [None] * n
+    bits = list(initial_bits) if initial_bits is not None else [0] * n
+    assert len(frames) == len(bits) == n and all(b in (0, 1) for b in bits)
+    assert 0 <= initial_hand < n
+    hand, out = initial_hand, []
+    for step, page in enumerate(ref, start=1):
+        hand_before, scanned, victim = hand, [], None
+        if page in frames:
+            outcome, slot = 'hit', frames.index(page)
+        elif None in frames:
+            outcome, slot = 'fill', frames.index(None)
         else:
-            while bits[hand] == 1:
-                bits[hand] = 0; hand = (hand + 1) % n
-            frames[hand] = p; bits[hand] = 1; hand = (hand + 1) % n
-        out.append(frozenset(frames))
+            outcome = 'evict'
+            while True:
+                scanned.append(hand)
+                if bits[hand] == 0:
+                    break
+                bits[hand] = 0
+                hand = (hand + 1) % n
+            slot, victim = hand, frames[hand]
+            hand = (hand + 1) % n
+        frames[slot], bits[slot] = page, 1
+        out.append({
+            'step': step,
+            'page': page,
+            'outcome': outcome,
+            'slot': slot,
+            'victim': victim,
+            'frames': list(frames),
+            'bits': list(bits),
+            'handBefore': hand_before,
+            'scanned': scanned,
+            'handAfter': hand,
+        })
     return out
+
+
+def trace_clock(ref, n):
+    """Residency projection of the canonical events, used by inclusion checks."""
+    return [frozenset(p for p in event['frames'] if p is not None)
+            for event in clock_events(ref, n)]
+
+
+def recency_demo():
+    """Screen 9's separate illustration: two hits update exact timestamps."""
+    ref = [1, 3, 2, 1, 3, 2, 1, 3, 1, 3, 2, 1, 3, 1, 3, 1, 3, 1]
+    frames, last_used, snapshots = [1, 3, 2], {}, []
+    for step, page in enumerate(ref, start=1):
+        last_used[page] = step
+        if step >= 16:
+            snapshots.append({'step': step, 'page': page,
+                              'lastUsed': [last_used[p] for p in frames]})
+    assert [s['lastUsed'] for s in snapshots] == [[16, 15, 11], [16, 17, 11], [18, 17, 11]]
+    return {'frames': frames, 'snapshots': snapshots}
+
+
+def clock_quick_check():
+    """The two visible choices on screen 10 share one persistent cursor."""
+    frames, bits, ref = [3, 1, 5], [1, 0, 1], [4, 2]
+    steps = clock_events(ref, 3, initial_frames=frames, initial_bits=bits)
+    assert steps[0]['scanned'] == [0, 1] and steps[0]['slot'] == 1
+    assert steps[0]['bits'] == [0, 1, 1] and steps[0]['handAfter'] == 2
+    assert steps[1]['scanned'] == [2, 0] and steps[1]['slot'] == 0
+    assert steps[1]['bits'] == [1, 1, 0] and steps[1]['handAfter'] == 1
+    return {'initialFrames': frames, 'initialBits': bits, 'ref': ref, 'steps': steps}
 
 def leak_steps(trace_fn, ref, small, big):
     """1-based steps where memory@small is NOT a subset of memory@big.
@@ -388,6 +454,65 @@ L2 = [1, 2, 2, 2, 3, 1, 4, 5, 1, 3, 5, 1, 1, 4, 5]        # 5 pages
 L3 = [1, 3, 2, 5, 3, 4, 3, 5, 4, 2, 5, 5, 4, 4, 3, 2]     # 5 pages
 BELADY = [1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5]             # Silberschatz
 
+def verify_clock_events():
+    """Pin the scans the learner will inspect, independently of the generator.
+
+    Full events are intentional: a correct fault count cannot catch a wrong
+    bit, a missing final inspection, or a hand that silently restarted at 0.
+    """
+    fields = ('step', 'page', 'outcome', 'slot', 'victim', 'frames', 'bits',
+              'handBefore', 'scanned', 'handAfter')
+    fixtures = [
+        ('screen 9', L3, 3, [
+            (3, 2, 'fill', 2, None, [1, 3, 2], [1, 1, 1], 0, [], 0),
+            (4, 5, 'evict', 0, 1, [5, 3, 2], [1, 0, 0], 0, [0, 1, 2, 0], 1),
+            (5, 3, 'hit', 1, None, [5, 3, 2], [1, 1, 0], 1, [], 1),
+            (6, 4, 'evict', 2, 2, [5, 3, 4], [1, 0, 1], 1, [1, 2], 0),
+        ]),
+        ('screen 12, three frames', BELADY, 3, [
+            (4, 4, 'evict', 0, 1, [4, 2, 3], [1, 0, 0], 0, [0, 1, 2, 0], 1),
+            (5, 1, 'evict', 1, 2, [4, 1, 3], [1, 1, 0], 1, [1], 2),
+            (6, 2, 'evict', 2, 3, [4, 1, 2], [1, 1, 1], 2, [2], 0),
+            (7, 5, 'evict', 0, 4, [5, 1, 2], [1, 0, 0], 0, [0, 1, 2, 0], 1),
+            (8, 1, 'hit', 1, None, [5, 1, 2], [1, 1, 0], 1, [], 1),
+        ]),
+        ('screen 12, four frames', BELADY, 4, [
+            (3, 3, 'fill', 2, None, [1, 2, 3, None], [1, 1, 1, 0], 0, [], 0),
+            (4, 4, 'fill', 3, None, [1, 2, 3, 4], [1, 1, 1, 1], 0, [], 0),
+            (5, 1, 'hit', 0, None, [1, 2, 3, 4], [1, 1, 1, 1], 0, [], 0),
+            (6, 2, 'hit', 1, None, [1, 2, 3, 4], [1, 1, 1, 1], 0, [], 0),
+            (7, 5, 'evict', 0, 1, [5, 2, 3, 4], [1, 0, 0, 0], 0, [0, 1, 2, 3, 0], 1),
+            (8, 1, 'evict', 1, 2, [5, 1, 3, 4], [1, 1, 0, 0], 1, [1], 2),
+        ]),
+        ('single frame', [1, 1, 2], 1, [
+            (1, 1, 'fill', 0, None, [1], [1], 0, [], 0),
+            (2, 1, 'hit', 0, None, [1], [1], 0, [], 0),
+            (3, 2, 'evict', 0, 1, [2], [1], 0, [0, 0], 0),
+        ]),
+        ('full sweep from a nonzero hand', [1, 2, 3, 4, 2, 3, 5], 3, [
+            (7, 5, 'evict', 1, 2, [4, 5, 3], [0, 1, 0], 1, [1, 2, 0, 1], 2),
+        ]),
+    ]
+    for name, ref, n, expected in fixtures:
+        events = clock_events(ref, n)
+        for row in expected:
+            want = dict(zip(fields, row))
+            got = events[want['step'] - 1]
+            assert got == want, f'{name}: got {got}, expected {want}'
+
+    # clock() remains a separate count oracle. Exhaust short tapes to exercise
+    # hits, spare capacity, immediate victims and wraparound beyond the lesson
+    # fixtures; also check every complete lesson run at both displayed sizes.
+    short_tapes = [ref for length in range(6)
+                   for ref in itertools.product((1, 2, 3), repeat=length)]
+    for ref in short_tapes + [L1, L2, L3, BELADY]:
+        for n in (1, 2, 3, 4):
+            events = clock_events(ref, n)
+            assert len(events) == len(ref)
+            got = sum(event['outcome'] != 'hit' for event in events)
+            assert got == clock(ref, n), f'Clock count differs: {ref}, {n} frames'
+
+
 def verify():
     """Asserts the lesson's current numerical and pedagogical invariants. Run: python3 sim.py"""
     # Level 1 — first decision winnable by reasoning
@@ -505,6 +630,7 @@ def verify():
     # Level 3 — clock == LRU, and the two natural near-misses both score 9
     assert (fifo(L3, 3), lru(L3, 3), clock(L3, 3), opt(L3, 3)) == (11, 8, 8, 7)
     assert clock_nohand(L3, 3) == 9 and clear_all(L3, 3) == 9
+    verify_clock_events()
 
     # Belady — on the learner's OWN rule (clock), not FIFO
     assert (clock(BELADY, 3), clock(BELADY, 4)) == (9, 10)

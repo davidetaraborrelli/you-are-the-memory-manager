@@ -6,6 +6,7 @@ dist/
 __pycache__/
 *.pyc
 .venv/
+public/pyodide/
 
 # Documenti di progettazione e file di servizio.
 # Non fanno parte del deliverable: chi clona deve avere solo cio' che serve

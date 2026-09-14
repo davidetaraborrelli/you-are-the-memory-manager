@@ -4,6 +4,12 @@
 /*.wasm
   Content-Type: application/wasm
 
+/pyodide/*.wasm
+  Content-Type: application/wasm
+
+/pyodide/*.mjs
+  Content-Type: text/javascript
+
 # Pyodide is version-pinned and immutable: cache it hard.
 /pyodide/*
   Cache-Control: public, max-age=31536000, immutable
