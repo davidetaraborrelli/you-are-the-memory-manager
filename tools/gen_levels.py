@@ -238,6 +238,7 @@ def build():
         "generatedBy": "tools/gen_levels.py - do not edit by hand",
         "recencyDemo": sim.recency_demo(),
         "clockQuickCheck": sim.clock_quick_check(),
+        "transfer": sim.transfer_example(),
         "levels": {
             "l1": level("l1", sim.L1, 3, ["fifo", "lru", "opt"], "Playing blind"),
             "l2": level("l2", sim.L2, 3, ["fifo", "lru", "opt"], "Recency gets easy"),
@@ -266,6 +267,7 @@ def build():
 
 def verify_against_sim(data):
     """Check totals, complete Clock events and the storyboard's key states."""
+    assert data['transfer'] == sim.transfer_example(), 'screen 14 evidence differs from the oracle'
     for key, lvl in data["levels"].items():
         for policy, steps in lvl["traces"].items():
             got, want = faults(steps), lvl["scores"][policy]

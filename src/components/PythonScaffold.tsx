@@ -7,17 +7,17 @@ export function PythonScaffold({ fields, errors, hints, disabled, reference, onC
   onChange: (index: number, value: string) => void; onHint: () => void; onAnswers: () => void
 }) {
   const input = (i: number) => (
-    <input aria-label={LABELS[i]} aria-invalid={!!errors[i]} aria-describedby={errors[i] ? `blank-error-${i}` : undefined}
+    <input type="text" aria-label={LABELS[i]} aria-invalid={!!errors[i]} aria-describedby={errors[i] ? `blank-error-${i}` : undefined}
       value={reference ? ANSWERS[i] : fields[i]} readOnly={reference} disabled={disabled}
       onChange={(event) => onChange(i, event.target.value)} autoComplete="off" autoCapitalize="off" spellCheck={false}
       maxLength={24} placeholder="___"
-      className={`mx-1 rounded border-2 bg-ground px-1 py-1 text-center font-mono text-ink outline-offset-2 focus-visible:outline-2 focus-visible:outline-focus ${i === 2 ? 'w-20' : 'w-12'} ${errors[i] ? 'border-fault' : 'border-focus'} disabled:opacity-50`}
+      className={`mx-1 min-h-11 border-2 bg-white px-1 py-1 text-center font-mono text-base text-ink outline-offset-2 focus-visible:outline-2 focus-visible:outline-focus ${i === 2 ? 'w-20' : 'w-12'} ${errors[i] ? 'border-fault' : 'border-focus'} disabled:opacity-50`}
     />
   )
   const locked = 'text-ink-dim'
   return (
     <div className="flex flex-col gap-4">
-      <div className="overflow-x-auto rounded-xl border border-edge bg-surface p-3 sm:p-4" aria-label="Python rule with three editable blanks">
+      <div className="sunken-panel code-editor min-w-0 overflow-x-auto p-3 sm:p-4" aria-label="Python rule with three editable blanks">
         <div className="whitespace-pre font-mono text-xs leading-7 sm:text-sm">
           <div className={locked}>def evict(frames, bits, state):</div>
           <div className="text-[10px] text-ink-dim">    # Provided: resume at the saved slot, or 0.</div>
@@ -34,10 +34,11 @@ export function PythonScaffold({ fields, errors, hints, disabled, reference, onC
           <div className={locked}>    return victim, bits</div>
         </div>
       </div>
+      <p className="text-xs text-ink-dim sm:hidden">Swipe across the code to see the full lines.</p>
       {errors.some(Boolean) && <div className="space-y-1 text-sm text-fault" role="alert">
         {errors.map((error, i) => error && <p id={`blank-error-${i}`} key={i}>{LABELS[i]}: {error}</p>)}
       </div>}
-      <aside className="rounded-xl border border-edge p-4 text-sm" aria-label="How to read this code">
+      <aside className="border border-edge p-4 text-sm" aria-label="How to read this code">
         <p className="mb-3 font-medium">How to read this code</p>
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-xs sm:text-sm">
           {SYNTAX.map(([code, explanation]) => <div key={code} className="contents"><dt className="font-mono text-key">{code}</dt><dd className="text-ink-dim">{explanation}</dd></div>)}
@@ -45,14 +46,14 @@ export function PythonScaffold({ fields, errors, hints, disabled, reference, onC
         <p className="mt-3 text-xs text-ink-dim">Provided: <code>next_slot</code> moves to the following slot and wraps from the last slot back to 0.</p>
       </aside>
       {!reference && <div className="space-y-3">
-        {Array.from({ length: hints }, (_, i) => <section key={i} className="rounded-xl border border-edge bg-surface p-4 text-sm" aria-label={`Hint ${i + 1}`}>
+        {Array.from({ length: hints }, (_, i) => <section key={i} className="field-border-disabled p-4 text-sm" aria-label={`Hint ${i + 1}`}>
           <p className="mb-2 font-medium">Hint {i + 1}</p>
           {i === 1 && <p className="mb-3 font-mono text-xs">cursor → {QUICK.initialFrames.map((page, slot) => `${page} [${QUICK.initialBits[slot]}]`).join('   ')}</p>}
           {i === 2 ? <pre className="overflow-x-auto text-xs leading-6 text-key">{HINTS[i].join('\n')}</pre>
             : <div className="space-y-2 text-ink-dim">{HINTS[i].map((line) => <p key={line}>{line}</p>)}</div>}
-          {i === 2 && <button type="button" disabled={disabled} onClick={onAnswers} className="mt-3 rounded-lg border border-ink-faint px-3 py-2 disabled:opacity-40">Use these answers</button>}
+          {i === 2 && <button type="button" disabled={disabled} onClick={onAnswers} className="mt-3 min-h-11 border border-ink-faint px-3 py-2 disabled:opacity-40">Use these answers</button>}
         </section>)}
-        {hints < HINTS.length && <button type="button" disabled={disabled} onClick={onHint} className="rounded-lg border border-edge px-3 py-2 text-sm text-ink-dim hover:text-ink disabled:opacity-40">Show hint {hints + 1}</button>}
+        {hints < HINTS.length && <button type="button" disabled={disabled} onClick={onHint} className="min-h-11 border border-edge px-3 py-2 text-sm text-ink-dim hover:text-ink disabled:opacity-40">Show hint {hints + 1}</button>}
       </div>}
     </div>
   )

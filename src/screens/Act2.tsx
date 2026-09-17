@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Tape } from '@/components/Tape'
 import { Frames, SwappedOut } from '@/components/Frames'
 import { Counter } from '@/components/Counter'
-import { Bubble } from '@/components/Bubble'
+import { Bubble, useVoice } from '@/components/Bubble'
 import { Choice } from '@/components/Choice'
 import { Scoreboard } from '@/components/Scoreboard'
 import { ProgressBar } from '@/components/ProgressBar'
@@ -100,14 +100,14 @@ export function Act2({
   }, [phase, game])
 
   /**
-   * The one face in act 2, and it lands after the run is over: the learner
+   * Completing the experiment earns approval: the learner
    * followed a rule to the end of a tape without switching, which is the thing
    * this act actually asked of them. It goes neutral again for the naming,
    * which is exposition and has nothing to approve of.
    */
   useEffect(() => {
     if (phase === 'result') setMachineState('approval')
-    if (phase === 'naming') setMachineState('neutral')
+    if (phase === 'intro' || phase === 'fork' || phase === 'naming') setMachineState('neutral')
   }, [phase])
 
   // --- what the voice is saying right now -----------------------------------
@@ -134,6 +134,10 @@ export function Act2({
                       ? GENERALISE
                       : THE_FLOOR
 
+  // The tape runs itself between decisions, and the voice has nothing to say
+  // over it. The bubble holds the last line for as long as that lasts.
+  const voice = useVoice(lines, lineIdx)
+
   const groupKey = `${phase}:${game.awaiting?.step ?? picked ?? 'x'}:${offRule}`
   useEffect(() => setLineIdx(0), [groupKey])
 
@@ -143,7 +147,7 @@ export function Act2({
   /** Same treatment as act 1: the region being pointed at is lit, not just undimmed. */
   const lit: Region | null = focus === 'mask' ? 'tape' : focus
   const region = (r: Region) => {
-    const base = 'rounded-xl px-3 py-2 -mx-3 transition-all duration-300'
+    const base = 'px-3 py-2 -mx-3 transition-all duration-300'
     if (lit) return lit === r ? `${base} bg-surface/40 ring-1 ring-edge` : `${base} opacity-30`
     return r === 'memory' && speaking ? `${base} opacity-45` : base
   }
@@ -176,16 +180,21 @@ export function Act2({
    */
   function choose(slot: number) {
     if (game.awaiting?.mode === 'evict' && rule && !consistentSlots(game, rule).includes(slot)) {
+      learnerCommitted()
+      setMachineState('correction')
       setOffRule(true)
       return
     }
     learnerCommitted()
+    setMachineState('neutral')
     setOffRule(false)
     setGame((g) => resolve(g, slot))
   }
 
   function pick(id: string) {
     learnerCommitted()
+    // Acknowledge making a testable hypothesis, whichever rule they picked.
+    setMachineState('approval')
     setPicked(id)
     onDeclare(id as DeclaredRule)
     setPhase('feedback')
@@ -210,7 +219,7 @@ export function Act2({
   return (
     <>
       <ProgressBar screen={screen} />
-      <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-6 px-5 py-12">
+      <main className="mx-auto flex lesson-content max-w-2xl flex-col justify-center gap-6 px-5 py-12">
         {showBoard && (
           <>
             <div className={region('tape')}>
@@ -240,7 +249,7 @@ export function Act2({
               />
             </div>
 
-            <div className={`flex items-center justify-between ${region('counter')}`}>
+            <div className={`flex flex-wrap items-center justify-between gap-3 ${region('counter')}`}>
               <SwappedOut pages={swappedOut(game)} />
               <Counter faults={game.faults} named lit={lit === 'counter'} />
             </div>
@@ -264,9 +273,12 @@ export function Act2({
 
         <div className="min-h-44">
           <Bubble
-            lines={lines}
-            index={lineIdx}
-            onNext={() => setLineIdx((n) => n + 1)}
+            lines={voice.lines}
+            index={voice.index}
+            onNext={() => {
+              if (phase === 'feedback' || phase === 'result') setMachineState('neutral')
+              setLineIdx((n) => n + 1)
+            }}
             onDone={onDoneLines}
             doneLabel={phase === 'bridge' ? 'Show me' : 'Got it'}
           />

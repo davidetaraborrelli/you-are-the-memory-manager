@@ -7,6 +7,7 @@ export const L1 = data.levels.l1
 export const L2 = data.levels.l2
 export const L3 = data.levels.l3
 export const BELADY = data.belady
+export const TRANSFER = data.transfer
 
 /** A reference trace, e.g. the OPT replay screen 8 plays back. */
 export function trace(level: Level, policy: Policy): Step[] {

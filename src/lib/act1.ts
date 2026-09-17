@@ -88,13 +88,13 @@ export const BEATS: Beat[] = [
     doneLabel: "Let's go",
     focus: [null, null, 'mask', 'tape', 'memory', 'counter', 'counter'],
     lines: [
-      "Hi! I'm the memory manager inside this computer. My job is deciding what stays in fast memory. For this run, you're doing it.",
-      'A program is running. The data it needs is stored on disk in numbered chunks called **pages**.',
-      "This strip is the program's request stream. You can see every request that already happened, but not the ones still to come.",
-      'I never read the program itself. I only receive these page numbers as they arrive, so I do not know what any page means.',
-      'These three slots are fast memory. A page already sitting here is ready immediately, but only three pages fit.',
-      'If the program asks for a page that is not here, we fetch it from disk. That costs a **trip**.',
-      'Fetching pages from the disk is A LOT slower than accessing them from memory. So, your job is to keep trips as low as possible!',
+      "Hi! I'm this computer's memory manager. I decide what stays in fast memory. Today, you're taking over.",
+      'The program asks for data in numbered chunks called **pages**. We fetch them from disk.',
+      "This tape shows the program's page requests. You can see the past; the requests still to come are hidden.",
+      'You get the same clues I do: page numbers as they arrive. You won\'t see what\'s inside each page.',
+      'These three slots are fast memory. A page here is ready to use, but only three pages fit.',
+      'If a requested page is missing, we fetch it from disk. The counter adds one **trip**.',
+      'Disk is much slower than memory. Your goal: get through the tape with as few trips as possible.',
     ],
   },
   {
@@ -102,7 +102,7 @@ export const BEATS: Beat[] = [
     screen: 1,
     when: (g) => g.cursor >= 1,
     focus: ['counter'],
-    lines: ["That's one trip. The counter tracks them, so lower is better."],
+    lines: ["Your first page is in memory. That's one trip on the counter."],
   },
   {
     // The takeaway this screen has to leave: a miss is a normal consequence of
@@ -113,8 +113,8 @@ export const BEATS: Beat[] = [
     when: (g) => g.cursor >= 3,
     focus: ['counter', null],
     lines: [
-      'Three trips already, but those were unavoidable. The program had never asked for those pages before, so they had to come in.',
-      'Count those as free. The interesting part starts when memory is full.',
+      'Three pages, three trips. Memory started empty, so each page had to be fetched.',
+      'Those trips count, but no choice could have avoided them. Now memory is full, and your choices begin.',
     ],
   },
   {
@@ -159,8 +159,8 @@ export const BEATS: Beat[] = [
     focus: [null, 'counter', null],
     lines: [
       'Level one done. You made every replacement without seeing the future.',
-      `Fun fact: the fewest trips this tape allows with three slots is ${L1.scores.opt}!`,
-      `I haven't shown you where that ${L1.scores.opt} comes from yet. Keep it in the back of your mind, for now.`,
+      `The fewest trips possible on this tape with three slots is ${L1.scores.opt}.`,
+      `We'll come back to that ${L1.scores.opt} and work out why it can't be beaten.`,
     ],
   },
   {
@@ -173,9 +173,9 @@ export const BEATS: Beat[] = [
     // learner just did (improvised) and what a computer does (follows a rule),
     // and hands over to screen 5, which asks which rule they were already on.
     lines: [
-      'By the way, those trips have a proper name: **page faults**. A requested page was missing from memory, so it had to be fetched.',
-      'And the choice you kept making, which resident page to remove, is called **page replacement**.',
-      "As you might have guessed, a real memory manager can't just improvise every time. It needs a rule to keep those trips to a minimum. And you may have already been following one!",
+      'Each trip happened because a requested page was missing from memory. That is a **page fault**.',
+      'Choosing which page to remove when memory is full is **page replacement**.',
+      "A memory manager needs a rule for that choice. Think back to your decisions: were you already following one?",
     ],
   },
 ]
@@ -183,6 +183,12 @@ export const BEATS: Beat[] = [
 export function beatMachine(beat: Beat, g: Game): MachineState | null {
   if (!beat.machine) return null
   return typeof beat.machine === 'function' ? beat.machine(g) : beat.machine
+}
+
+/** React to the first visible cost of an earlier eviction, not its replacement. */
+export function regretFace(g: Game, line: number): MachineState {
+  const first = g.awaiting?.regret && !g.events.some((e) => e.kind === 'evict' && e.regret)
+  return first && line === 0 ? 'apologetic' : 'neutral'
 }
 
 export function beatLines(beat: Beat, g: Game): string[] {
@@ -212,8 +218,8 @@ export function ambientFor(g: Game): string[] | null {
     // hand over the intuition the learner is here to have.
     return [
       `Now memory is full and page ${page} needs a slot. One of these three pages has to go.`,
-      "I know, I haven't taught you how to choose yet. Just look at the pages requested so far and see what your instinct tells you.",
-      "Which page do you think you're least likely to need next? Tap it.",
+      "There's no rule to follow yet. Look at the requests so far and make your best guess.",
+      "Which page seems least likely to come back soon? Tap it to make room.",
     ]
   }
 
@@ -229,20 +235,10 @@ export function ambientFor(g: Game): string[] | null {
       return [`Page ${page} is back. You dropped it ${gap(r.stepsAgo)} ago.`]
     }
 
-    const lines = [
+    return [
       `Ah, page ${page} is back already.`,
       `You dropped it ${gap(r.stepsAgo)} ago, so now we have to fetch it again.`,
     ]
-    // If the page had just been requested, the evidence was on the tape and
-    // saying so now costs nothing: the choice it comments on is already
-    // committed. It stops at "maybe that was a clue" because naming the clue is
-    // the rule, and the rule is screen 5's job, not this screen's.
-    const droppedAt = g.awaiting.step - r.stepsAgo
-    const lastUse = g.ref.lastIndexOf(page, droppedAt - 2)
-    if (lastUse >= 0 && droppedAt - 1 - lastUse <= 2) {
-      lines.push(`Page ${page} had just appeared. Maybe that was a clue!`)
-    }
-    return lines
   }
 
   return [`Page ${page} needs a slot. Which page do you drop?`]

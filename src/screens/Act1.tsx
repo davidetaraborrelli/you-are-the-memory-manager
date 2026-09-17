@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import { Tape } from '@/components/Tape'
 import { Frames, SwappedOut } from '@/components/Frames'
 import { Counter } from '@/components/Counter'
-import { Bubble } from '@/components/Bubble'
+import { Bubble, useVoice } from '@/components/Bubble'
 import { ProgressBar } from '@/components/ProgressBar'
 import { L1 } from '@/lib/levels'
 import { advance, createGame, isDone, resolve, swappedOut } from '@/lib/game'
 import { learnerCommitted, machineGate, resetMachine, setMachineState } from '@/lib/machine'
-import { BEATS, ambientFor, beatLines, beatMachine, endCard, type Beat, type Focus } from '@/lib/act1'
+import { BEATS, ambientFor, beatLines, beatMachine, endCard, regretFace, type Beat, type Focus } from '@/lib/act1'
 
 /** The three regions of the board a line can be lit against. */
 type Region = 'tape' | 'memory' | 'counter'
@@ -55,6 +55,7 @@ export function Act1({ onDone }: { onDone: () => void }) {
 
   function choose(slot: number) {
     learnerCommitted()
+    setMachineState('neutral')
     setGame((g) => resolve(g, slot))
   }
 
@@ -94,6 +95,22 @@ export function Act1({ onDone }: { onDone: () => void }) {
   const ambient = beat ? null : ambientFor(game)
   const lines = beat ? beatLines(beat, game) : (ambient ?? [])
 
+  // Sympathy for a consequence now visible, never a judgement of the next
+  // victim. Later regrets stay matter-of-fact instead of repeating the gag.
+  useEffect(() => {
+    if (beat || !game.awaiting) return
+    const face = regretFace(game, lineIdx)
+    // The recorded eviction is an actual earlier commitment, even when a
+    // narration boundary has since opened screen 3's gate.
+    if (face === 'apologetic') learnerCommitted()
+    setMachineState(face)
+  }, [beat, game, lineIdx])
+
+  // Between two groups the tape runs by itself and there is no group at all.
+  // The bubble keeps the last line through it rather than emptying under a
+  // board that has started moving.
+  const voice = useVoice(lines, lineIdx)
+
   // One group of lines at a time; the index resets when the group changes.
   const groupKey = beat ? `beat:${beat.id}` : `ambient:${game.awaiting?.step ?? 'idle'}`
 
@@ -129,7 +146,7 @@ export function Act1({ onDone }: { onDone: () => void }) {
    * colour would read as "tappable", which on this screen nothing is.
    */
   const region = (r: Region) => {
-    const base = 'rounded-xl px-3 py-2 -mx-3 transition-all duration-300'
+    const base = 'px-3 py-2 -mx-3 transition-all duration-300'
     if (lit) return lit === r ? `${base} bg-surface/40 ring-1 ring-edge` : `${base} opacity-30`
     // Nothing is being pointed at, so only the board the learner taps on
     // carries the turn-taking dim.
@@ -148,7 +165,7 @@ export function Act1({ onDone }: { onDone: () => void }) {
   return (
     <>
       <ProgressBar screen={screen} />
-      <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-6 px-5 py-12">
+      <main className="mx-auto flex lesson-content max-w-2xl flex-col justify-center gap-6 px-5 py-12">
         {/* The marker sits on the request being *dealt with*, not the one after
             it: while a beat is speaking about a hit, the tape has to still be
             showing that hit. When frozen for a decision it moves forward to the
@@ -183,7 +200,7 @@ export function Act1({ onDone }: { onDone: () => void }) {
           />
         </div>
 
-        <div className={`flex items-center justify-between ${region('counter')}`}>
+        <div className={`flex flex-wrap items-center justify-between gap-3 ${region('counter')}`}>
           <SwappedOut pages={swappedOut(game)} />
           <Counter faults={game.faults} named={named} lit={lit === 'counter'} />
         </div>
@@ -207,8 +224,8 @@ export function Act1({ onDone }: { onDone: () => void }) {
 
         <div className="min-h-44">
           <Bubble
-            lines={lines}
-            index={lineIdx}
+            lines={voice.lines}
+            index={voice.index}
             onNext={advanceLine}
             onDone={beat ? dismissBeat : undefined}
             doneLabel={beat?.doneLabel}

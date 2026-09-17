@@ -5,9 +5,9 @@ export type Blanks = [string, string, string]
 export const ANSWERS: Blanks = ['1', '0', 'cursor']
 export const REFERENCE_AFTER = 3
 export const INTRO = [
-  'So, you found a way to make "recent" fade instead of storing the exact order. Now let\'s turn that rule into Python so we can run it on the whole tape.',
+  'Let\'s put your rule into Python and run it on the whole tape.',
   "I've already written the code that remembers where to start and moves around the slots.",
-  'You only need to complete three blanks: when should the search continue, what should happen to that bit, and which position should be removed when the search stops?',
+  'Fill in three choices: which bit keeps the search going, what it becomes, and which slot to choose when the search stops.',
 ]
 export const SYNTAX = [
   ['cursor', 'the slot currently being inspected'],
@@ -118,8 +118,8 @@ export function playback(spec: RunSpec, records: ExecutedStep[] = spec.steps): P
 export const resultLines = (reference: boolean) => [
   `${L3.scores.clock} faults. Exact LRU also took ${L3.scores.lru}, while OPT took ${L3.scores.opt}.`,
   reference
-    ? "This rule throws away almost all of LRU's precision, and on this tape it does not pay a single extra fault for it."
-    : "You threw away almost all of LRU's precision, and on this tape you did not pay a single extra fault for it. Pretty neat, eh?!",
-  reference ? 'The rule you were building has a name: **clock**.' : 'The rule you just built has a name: **clock**.',
-  'LRU keeps exact recency. Clock keeps a cheaper trace of the same idea: recent use is evidence that a page may be useful again soon. Cheap and almost as powerful as OPT!',
+    ? "On this tape, the one-bit rule matched LRU while keeping much less information."
+    : "Your rule matched LRU on this tape while keeping much less information.",
+  reference ? 'The rule you were building is called **Clock**. Its search position moves around the slots like a clock hand.' : 'The rule you just built is called **Clock**. Its search position moves around the slots like a clock hand.',
+  'Now let\'s see what happens when we give the same rule more memory.',
 ]

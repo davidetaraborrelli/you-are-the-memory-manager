@@ -1,7 +1,7 @@
 import { TOTAL_SCREENS } from '@/lib/screens'
 
 /**
- * A thin line at the top, filling across the fourteen screens.
+ * A 98.css segmented progress indicator across the fourteen screens.
  *
  * No numbers, no labels. Brilliant never leaves a learner wondering how much is
  * left, and a lesson that ends on purpose on an open question looks broken
@@ -11,7 +11,7 @@ export function ProgressBar({ screen }: { screen: number }) {
   const pct = (screen / TOTAL_SCREENS) * 100
   return (
     <div
-      className="fixed inset-x-0 top-0 z-50 h-0.5 bg-surface"
+      className="progress-indicator segmented lesson-progress"
       role="progressbar"
       aria-valuenow={screen}
       aria-valuemin={0}
@@ -19,7 +19,7 @@ export function ProgressBar({ screen }: { screen: number }) {
       aria-label="lesson progress"
     >
       <div
-        className="h-full bg-ink-faint transition-[width] duration-700 ease-out"
+        className="progress-indicator-bar transition-[width] duration-700 ease-out"
         style={{ width: `${pct}%` }}
       />
     </div>

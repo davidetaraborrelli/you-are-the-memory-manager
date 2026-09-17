@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bubble } from '@/components/Bubble'
+import { Bubble, useVoice } from '@/components/Bubble'
 import { CodePlayback } from '@/components/CodePlayback'
 import { ProgressBar } from '@/components/ProgressBar'
 import { PythonScaffold } from '@/components/PythonScaffold'
@@ -76,7 +76,7 @@ export function Act5({ onDone }: { onDone: (reference: boolean) => void }) {
       return
     }
     const errors = validateBlanks(editor.fields)
-    if (errors.some(Boolean)) { setEditor((e) => ({ ...e, errors })); return }
+    if (errors.some(Boolean)) { setMachineState('correction'); setEditor((e) => ({ ...e, errors })); return }
     setBusy(true)
     setEditor((e) => ({ ...e, errors: [null, null, null], message: null }))
     const ticket = ++sequence.current
@@ -84,6 +84,7 @@ export function Act5({ onDone }: { onDone: (reference: boolean) => void }) {
     if (!alive.current || ticket !== sequence.current) return
     setBusy(false)
     if (result.status === 'runtime_error') {
+      setMachineState('apologetic')
       setRuntimeFailed(true)
       setEditor((e) => ({ ...e, message: result.message }))
       go('editor')
@@ -106,9 +107,12 @@ export function Act5({ onDone }: { onDone: (reference: boolean) => void }) {
     if (execution?.status === 'different') {
       setMachineState('correction')
       go('difference')
-    } else if (stage === 'quick') go('quick-passed')
-    else {
+    } else if (stage === 'quick') {
       setMachineState('approval')
+      go('quick-passed')
+    }
+    else {
+      setMachineState(reference ? 'approval' : 'satisfied')
       go('result')
     }
   }
@@ -141,6 +145,10 @@ export function Act5({ onDone }: { onDone: (reference: boolean) => void }) {
     : phase === 'quick-passed' ? ['That matches the rule. Now let\'s run it on the whole tape.']
     : phase === 'difference' ? [execution?.message ?? 'This choice differs. Look at the page removed and the bits left behind.']
     : phase === 'result' ? resultLines(reference) : []
+  // The editor and the playback are both stretches with no voice: one is the
+  // learner typing, the other is the machine running what they typed. Each
+  // keeps the line that handed it the screen.
+  const voice = useVoice(lines, line, phase)
   const done = phase === 'intro' ? (availability === 'checking' ? undefined : () => go('editor'))
     : phase === 'quick-intro' ? () => beginPlayback('quick', execution!)
     : phase === 'quick-passed' ? (busy ? undefined : () => { void run('full') })
@@ -149,35 +157,38 @@ export function Act5({ onDone }: { onDone: (reference: boolean) => void }) {
 
   return <>
     <ProgressBar screen={10} />
-    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-6 px-5 py-10 sm:py-12">
+    <main className="mx-auto flex lesson-content max-w-3xl flex-col justify-center gap-6 px-5 py-10 sm:py-12">
       <p className="font-mono text-[10px] uppercase tracking-widest text-ink-dim">Make the cheap rule executable</p>
       {phase === 'editor' && <>
-        {availability === 'runtime_unavailable' && <p className="rounded-xl border border-edge bg-surface p-4 text-sm text-ink-dim" role="status">
+        {availability === 'runtime_unavailable' && <p className="field-border-disabled p-4 text-sm text-ink-dim" role="status">
           Python isn't available here, so we'll walk through the reference rule. You can still watch every choice.
         </p>}
         <PythonScaffold fields={editor.fields} errors={editor.errors} hints={editor.hints}
           disabled={busy} reference={reference}
-          onChange={(index, value) => setEditor((e) => {
-            const fields = [...e.fields] as Blanks; fields[index] = value
-            const errors = [...e.errors]; errors[index] = null
-            return { ...e, fields, errors, message: null }
-          })}
+          onChange={(index, value) => {
+            setMachineState('neutral')
+            setEditor((e) => {
+              const fields = [...e.fields] as Blanks; fields[index] = value
+              const errors = [...e.errors]; errors[index] = null
+              return { ...e, fields, errors, message: null }
+            })
+          }}
           onHint={() => setEditor((e) => ({ ...e, hints: Math.min(3, e.hints + 1) }))}
           onAnswers={() => setEditor((e) => ({ ...e, fields: [...ANSWERS], errors: [null, null, null], message: null }))}
         />
         {editor.message && !editor.errors.some(Boolean) && <p role="alert" className="text-sm text-fault">{editor.message}</p>}
         <div className="flex flex-wrap gap-3">
           <button type="button" disabled={busy || (!reference && (runtimeFailed || editor.fields.some((v) => !v.trim())))}
-            onClick={() => { void run('quick') }} className="rounded-lg bg-ink px-4 py-3 text-sm font-medium text-ground disabled:opacity-35">
+            onClick={() => { void run('quick') }} className="px-4 py-3 text-sm font-medium disabled:opacity-35">
             {busy ? 'Running your rule…' : reference ? 'Continue with the reference rule' : 'Run my rule'}
           </button>
-          {fallbackOffered && <button type="button" disabled={busy} onClick={useReference} className="rounded-lg border border-edge px-4 py-3 text-sm">Use the reference rule</button>}
+          {fallbackOffered && <button type="button" disabled={busy} onClick={useReference} className="border border-edge px-4 py-3 text-sm">Use the reference rule</button>}
         </div>
       </>}
       {shownFrame && <CodePlayback frame={shownFrame} spec={phase === 'quick-intro' ? QUICK : spec} stage={phase === 'quick-intro' ? 'quick' : stage} reference={reference} />}
       {phase === 'play' && <div className="flex flex-wrap items-center gap-3 text-sm">
-        <button type="button" onClick={() => setPaused((p) => !p)} className="rounded-lg border border-edge px-4 py-2">{paused ? 'Play' : 'Pause'}</button>
-        <button type="button" onClick={() => { setPaused(true); advanceFrame() }} className="rounded-lg border border-edge px-4 py-2">Next action</button>
+        <button type="button" onClick={() => setPaused((p) => !p)} className="min-h-11 border border-edge px-4 py-2">{paused ? 'Play' : 'Pause'}</button>
+        <button type="button" onClick={() => { setPaused(true); advanceFrame() }} className="min-h-11 border border-edge px-4 py-2">Next action</button>
         {repair && <span className="text-ink-dim">Reference replay of this choice</span>}
       </div>}
       {phase === 'result' && <Scoreboard rows={[
@@ -185,11 +196,14 @@ export function Act5({ onDone }: { onDone: (reference: boolean) => void }) {
         { id: 'lru', label: 'LRU, exact recency', value: L3.scores.lru },
         { id: 'opt', label: 'OPT, perfect future', value: L3.scores.opt },
       ]} caption="Page faults on level three" />}
-      {lines.length > 0 && <Bubble key={phase} lines={lines} index={line} onNext={() => setLine((i) => i + 1)} onDone={done}
+      {voice.lines.length > 0 && <Bubble key={voice.key} lines={voice.lines} index={voice.index} onNext={() => {
+        if (phase === 'result' && line + 1 === lines.length - 1) setMachineState('neutral')
+        setLine((i) => i + 1)
+      }} onDone={done}
         doneLabel={phase === 'intro' ? 'Open the code' : phase === 'quick-intro' ? 'Watch the choices' : phase === 'quick-passed' ? 'Run the full tape' : phase === 'difference' ? 'Back to editor' : 'One more slot'} />}
       {phase === 'intro' && availability === 'checking' && line === INTRO.length - 1 && <p role="status" className="text-sm text-ink-dim">Preparing the code activity…</p>}
       {busy && phase !== 'editor' && <p role="status" className="text-sm text-ink-dim">Running your rule…</p>}
-      {phase === 'difference' && fallbackOffered && <button type="button" onClick={useReference} className="self-start rounded-lg border border-edge px-4 py-3 text-sm">Use the reference rule</button>}
+      {phase === 'difference' && fallbackOffered && <button type="button" onClick={useReference} className="self-start border border-edge px-4 py-3 text-sm">Use the reference rule</button>}
     </main>
   </>
 }

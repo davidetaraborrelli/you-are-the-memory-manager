@@ -100,6 +100,53 @@
    }
   ]
  },
+ "transfer": {
+  "capacity": 3,
+  "taskA": [
+   "auth.py",
+   "tests",
+   "auth.py",
+   "config",
+   "tests",
+   "auth.py",
+   "tests"
+  ],
+  "taskB": [
+   "api.py",
+   "db.py",
+   "utils.py",
+   "models.py",
+   "api.py",
+   "db.py",
+   "utils.py",
+   "models.py"
+  ],
+  "shortReturns": [
+   [
+    0,
+    2
+   ],
+   [
+    4,
+    6
+   ]
+  ],
+  "cycleLength": 4,
+  "checkpoint": {
+   "requestIndex": 3,
+   "resident": [
+    "api.py",
+    "db.py",
+    "utils.py"
+   ],
+   "incoming": "models.py",
+   "victim": "utils.py",
+   "nextIndices": [
+    4,
+    5
+   ]
+  }
+ },
  "levels": {
   "l1": {
    "name": "l1",

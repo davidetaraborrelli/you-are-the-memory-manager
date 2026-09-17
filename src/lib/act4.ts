@@ -27,23 +27,23 @@ export interface GuideBeat {
 
 export const GUIDE: GuideBeat[] = [
   { id: 'exact', scene: 'exact', action: 'continue', label: 'Watch two requests', lines: [
-    "So, we've seen that LRU worked because I kept exact recency for every page: who was most recent, who was next, and so on.",
-    'But, as I mentioned, that record does not maintain itself. Every time a resident page is used, I have to keep the recency information current.',
+    "Here's the record behind LRU: when each page was last used. It tells us which page was used longest ago.",
+    'Watch what happens to the record when a page already in memory is used again.',
   ] },
   { id: 'hits', scene: 'exact', action: 'watch', lines: [
-    'Watch the record as these two resident pages are used.',
+    'Both requests are hits. Watch the last-used values change.',
   ] },
   { id: 'cost', scene: 'exact', action: 'question', lines: ['When does that bookkeeping have to happen?'] },
   { id: 'cost-earned', scene: 'exact', action: 'continue', lines: [
-    'Exactly. And it is not one page at a time: to know who is least recent, I have to keep every resident page in order, on every single use.',
+    'Exactly. Even a hit can change the recency order. LRU must track where the used page belongs among all the others.',
   ] },
   { id: 'scale', scene: 'scale', action: 'continue', lines: [
-    "With three pages, that's tiny. But a real system may be tracking a huge number of pages.",
-    "That's a ton of computing power that could be used somewhere else! Do we really need recency this precisely?",
+    "Keeping that exact order takes work, especially with many pages.",
+    "Could we keep a useful clue about recent use without tracking the whole order?",
   ] },
   { id: 'compress', scene: 'bits', action: 'continue', label: 'Try the cheaper clue', lines: [
-    "Let's throw away the exact timestamps and keep just one cheaper clue per page: a **reference bit**.",
-    'When a page is used, its bit becomes 1. We no longer know exactly when it was used, only that it has shown recent activity.',
+    "Let's replace each timestamp with a **reference bit**: a marker that can be 0 or 1.",
+    'Using a page sets its bit to 1. That records the use, but not when it happened.',
   ] },
   { id: 'fill', scene: 'run', action: 'watch', completed: 0, lines: [
     'Here is level three. The first three pages enter empty slots. Each starts at 1 because it has just been used.',
@@ -52,17 +52,17 @@ export const GUIDE: GuideBeat[] = [
     'Page 5 needs a slot, but all three resident pages say 1. With the exact timestamps gone, can you tell which one is least recent?',
   ] },
   { id: 'first-inspection', scene: 'run', action: 'inspect', completed: 3, pending: 4, inspected: 0, hand: true, lines: [
-    'Right. A single bit cannot tell us the exact order anymore. All three only say: "I\'ve been used recently."',
-    "So let's make that evidence temporary. If we inspect a page with a 1, we'll spare it this time, clear its old evidence to 0, and keep looking.",
+    'All three bits say 1. The bits alone cannot tell us which page was used longest ago.',
+    "Let's make a 1 worth one extra chance. When we inspect it, we'll change it to 0, spare the page, and move to the next slot.",
   ] },
   { id: 'spent', scene: 'run', action: 'continue', completed: 3, pending: 4, inspected: 1, hand: true, lines: [
-    'Page 1 gets another chance. Its old evidence has now been spent.',
+    'Page 1 stays. Its bit is now 0, so another use can leave a fresh mark.',
   ] },
   { id: 'inspect-middle', scene: 'run', action: 'inspect', completed: 3, pending: 4, inspected: 1, hand: true, lines: [] },
   { id: 'inspect-last', scene: 'run', action: 'inspect', completed: 3, pending: 4, inspected: 2, hand: true, lines: [] },
   { id: 'first-victim', scene: 'run', action: 'evict', completed: 3, pending: 4, inspected: 3, hand: true, lines: [
-    "Notice: we didn't clear every bit at once. We inspected the pages one by one.",
-    "Page 1 now says 0. Since we cleared its old evidence, it hasn't been used again.",
+    "We've inspected each slot once. Now we're back at page 1.",
+    "Its bit is still 0: it hasn't been used since we cleared the bit.",
   ] },
   { id: 'loaded', scene: 'run', action: 'continue', completed: 4, lines: [
     'Page 5 starts at 1 because it has just been used.',
@@ -72,24 +72,24 @@ export const GUIDE: GuideBeat[] = [
   ] },
   { id: 'restored', scene: 'run', action: 'continue', completed: 5, lines: [
     'There it is. Page 3 was used again, so its bit went back to 1.',
-    "Clearing a bit didn't mark the page as \"old\" forever. It gave the page a chance to prove it was still being used.",
+    "A new use restores the chance that the previous inspection took away.",
   ] },
   { id: 'resume', scene: 'run', action: 'inspect', completed: 5, pending: 6, inspected: 0, hand: true, lines: [
-    "We also remember where to continue the search next time. We don't always start again from the first slot.",
+    "Page 4 needs a slot. We resume just after the last replacement, at page 3.",
   ] },
   { id: 'second-victim', scene: 'run', action: 'evict', completed: 5, pending: 6, inspected: 1, hand: true, lines: [
     'Page 3 has fresh evidence, so it gets another chance.',
     "Page 2 still says 0. Unlike page 3, it hasn't been used again since we cleared its bit.",
   ] },
   { id: 'understood', scene: 'run', action: 'continue', completed: 6, hand: true, lines: [
-    'Exactly. A 1 earns a page another chance. If the page is used again, it earns a new 1.',
-    'A 0 means it has shown no fresh use since we last checked it, so it becomes a good candidate to remove.',
+    'You removed a page still at 0 when the search reached it. A page marked 1 gets another chance.',
+    'Every use still sets a bit. The saving is that we no longer maintain the exact order; we inspect and clear bits when a replacement is required.',
   ] },
   { id: 'compression-earned', scene: 'comparison', action: 'continue', completed: 6, lines: [
-    'We no longer know exactly which page is least recent. But we kept the useful idea: pages that keep getting used keep earning another chance.',
+    'One bit per page and a remembered search position. Less information than LRU, but repeated use can still protect a page.',
   ] },
   { id: 'bridge', scene: 'comparison', action: 'continue', completed: 6, label: 'Make it a rule', lines: [
-    "You've got the behaviour. Now let's get our hands dirty and make it a rule!",
+    "You have followed the rule by hand. Now make the computer follow it.",
   ] },
 ]
 
@@ -110,9 +110,13 @@ export type GuideAction =
 export const initialGuide = (): GuideState => ({
   beat: 0, line: 0, ticks: 0, explored: [], error: null, reaction: 'neutral', attempts: 0,
 })
-const forward = (s: GuideState): GuideState => ({
-  ...s, beat: s.beat + 1, line: 0, ticks: 0, error: null, reaction: 'neutral',
-})
+const forward = (s: GuideState): GuideState => {
+  const next = GUIDE[s.beat + 1]?.id
+  return {
+    ...s, beat: s.beat + 1, line: 0, ticks: 0, error: null,
+    reaction: next === 'compression-earned' ? 'satisfied' : next === 'restored' ? 'approval' : 'neutral',
+  }
+}
 
 /** Render an event prefix: replay supplied clear operations, never infer a scan. */
 export function guideBoard(s: GuideState) {
@@ -142,7 +146,11 @@ export function guideReducer(s: GuideState, action: GuideAction): GuideState {
   const beat = GUIDE[s.beat]
   if (!beat) return s
   if (action.type === 'next') {
-    if (s.line < beat.lines.length - 1) return { ...s, line: s.line + 1 }
+    if (s.line < beat.lines.length - 1) return {
+      ...s, line: s.line + 1,
+      // The apology belongs to the discovered limit, not the next proposal.
+      reaction: ['first-inspection', 'restored', 'second-victim', 'understood'].includes(beat.id) ? 'neutral' : s.reaction,
+    }
     return beat.action === 'continue' ? forward(s) : s
   }
   if (action.type === 'tick') {
@@ -163,10 +171,15 @@ export function guideReducer(s: GuideState, action: GuideAction): GuideState {
   if (!Number.isInteger(action.slot) || board.frames[action.slot] == null) return s
   if (beat.action === 'explore') {
     const explored = [...new Set([...s.explored, action.slot])]
-    return explored.length === L3.frames ? { ...forward(s), explored }
-      : { ...s, explored, error: `Page ${board.frames[action.slot]} says 1: it has been used recently.`, attempts: s.attempts + 1 }
+    return explored.length === L3.frames ? { ...forward(s), explored, reaction: 'apologetic' }
+      : { ...s, explored, error: `Page ${board.frames[action.slot]} has bit 1. The bit records use, but not when it happened.`, attempts: s.attempts + 1 }
   }
-  if (beat.action === 'inspect') return action.slot === board.hand ? forward(s) : s
+  if (beat.action === 'inspect') {
+    if (action.slot !== board.hand) return s
+    const next = forward(s)
+    // Acknowledge the first cleared bit and the renewed chance on page 3.
+    return beat.id === 'first-inspection' || beat.id === 'resume' ? { ...next, reaction: 'approval' } : next
+  }
   if (beat.action !== 'evict') return s
   if (action.slot === CLOCK[beat.pending! - 1].slot) return { ...forward(s), reaction: 'approval' }
   const fresh = board.bits[action.slot] === 1

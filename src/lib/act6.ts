@@ -2,9 +2,9 @@ import { BELADY } from './levels.ts'
 import type { ClockStep } from './types.ts'
 
 export const OPEN = [
-  "So far you've worked with three slots all lesson. Let's add another one!",
-  'Those physical-memory slots have a proper name, by the way; they are called **frames**.',
-  'Now, your turn. We have a new tape, same replacement rule, but one extra frame. How do you think that frame would affect page faults?',
+  "You've used three memory slots so far. Let's try four.",
+  'A slot that holds one page is called a **frame**.',
+  'We\'ll run Clock twice on a new tape: once with three frames, once with four. How will the extra frame affect the fault count?',
 ]
 export const PREDICTIONS = [
   { id: 'fewer', label: 'Fewer page faults' },
@@ -12,10 +12,10 @@ export const PREDICTIONS = [
   { id: 'more', label: 'More page faults' },
 ]
 export const RESULT = [
-  "On this tape, Clock went from nine faults to ten. This doesn't happen every time you add memory, but it shows that more space does not guarantee fewer faults with Clock.",
-  "Let's bring back OPT, our benchmark with perfect knowledge of the future, to check what this extra frame made possible.",
-  "On this same tape, OPT improves from seven faults to six. The extra space could help, but Clock's choices made its result worse.",
-  "The totals tell us what happened. To find out why, let's go back through the two Clock runs and compare which pages they kept.",
+  "Clock went from nine faults to ten. This doesn't happen every time memory grows, but it shows that an extra frame can increase Clock's faults.",
+  "What could the extra frame have made possible? Let's check OPT, our benchmark with perfect knowledge of the future.",
+  "OPT goes from seven faults to six on this same tape. More space allows a better result, yet Clock's choices produced a worse one.",
+  "Let's compare the pages Clock kept in each run to find out how the extra frame led to more faults.",
 ]
 export const OPT_RESULT_LINE = 2
 export function ruleLabel(reference: boolean) {

@@ -1,7 +1,7 @@
 {
   "name": "memory-manager-lesson",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "predev": "node tools/prepare_pyodide.mjs",
@@ -16,11 +16,15 @@
     "test:guide": "node --experimental-strip-types --no-warnings tools/check_act4.ts",
     "test:comparison": "node --experimental-strip-types --no-warnings tools/check_act6.ts",
     "test:leak": "node --experimental-strip-types --no-warnings tools/check_leak.ts",
+    "test:stack": "node --experimental-strip-types --no-warnings tools/check_stack.ts",
+    "test:transfer": "node --experimental-strip-types --no-warnings tools/check_transfer.ts",
     "test:python": "node tools/prepare_pyodide.mjs && node --experimental-strip-types --no-warnings tools/check_python.ts",
     "test:worker": "node tools/check_worker.mjs",
-    "test": "npm run test:data && npm run test:gen && npm run test:engine && npm run test:guide && npm run test:comparison && npm run test:leak && npm run test:python"
+    "test:portrait": "node --experimental-strip-types --no-warnings tools/check_portrait.ts",
+    "test": "npm run test:data && npm run test:gen && npm run test:engine && npm run test:guide && npm run test:comparison && npm run test:leak && npm run test:stack && npm run test:transfer && npm run test:portrait && npm run test:python"
   },
   "dependencies": {
+    "98.css": "0.1.21",
     "pyodide": "314.0.7",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

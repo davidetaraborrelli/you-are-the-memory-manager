@@ -2,35 +2,33 @@ import { BELADY } from './levels.ts'
 import { playback, type PlaybackFrame } from './code-lesson.ts'
 
 export const SEARCH = [
-  'Both memories are showing the moment after the highlighted request. Move them together and compare which pages they hold.',
+  'Move along the tape to compare both memories after the same request.',
   'Somewhere in these two runs, the smaller memory is holding a page that the bigger memory has already thrown away.',
   'Find the first step where that happens, then tap the page that proves it.',
 ]
 export const FOUND = [
-  "That's the leak. At the end of step 7, the smaller memory still has page 1, but the bigger memory has already lost it.",
-  "You found where the runs split. Now let's rewind and see why clock made the larger memory drop page 1.",
+  "That's the first missing page. After request 7, page 1 is in the smaller memory and absent from the larger one.",
+  "Now let's rewind to see why Clock kept page 1 in one run and removed it in the other.",
 ]
 export const EXPLANATIONS: Record<number, string[]> = {
-  4: ['The extra frame helps here. Page 4 fits without a replacement. But that also means clock does not scan any old bits, and its hand stays on page 1.'],
-  5: ['The larger memory saves a fault. But page 1\'s bit was already 1. One bit cannot say "used even more recently", and a hit does not move the hand.'],
+  4: ['With four frames, page 4 fits in the empty slot. There is no scan: the bits stay at 1, and the hand stays on page 1.'],
+  5: ['The larger memory saves a fault on page 1. Its bit was already 1, so this newer use leaves no new information. The hand stays put.'],
   6: [
-    'The same thing happens with page 2. The larger memory saves another fault.',
-    'But its one-bit record still cannot distinguish the recent hits on pages 1 and 2 from the older uses of pages 3 and 4.',
-    'So the extra frame has helped twice. It has also left clock with a different replacement history.',
-    'Every page now looks equally recent, but the hand faces page 4 in the smaller run and page 1 in the larger run.',
+    'Page 2 saves the larger memory another fault. In the smaller run, a replacement moves the hand again.',
+    'All bits are now 1 in both runs, despite the different times each page was used.',
+    'The hands are in different places: page 4 in the smaller memory, page 1 in the larger one.',
   ],
   7: [
-    'Every bit gives clock the same answer, so the hand breaks the tie. The smaller run returns to page 4. The larger run returns to page 1. Same rule. Same incoming page. Different history.',
-    'Clock\'s bits did not malfunction. They remembered "used since the last inspection", exactly as designed.',
-    'But once every bit says 1, they cannot preserve the exact recency, so the page under the hand decides.',
-    'The extra frame did not make memory worse. It changed when clock had to inspect and replace pages, and that changed which page survived.',
+    'Each scan clears every 1, then returns to where it started. The smaller run removes page 4; the larger run removes page 1.',
+    'A 1 records use since the bit was last cleared. It cannot rank pages by how recently they were used.',
+    'The extra frame changed when Clock scanned and replaced pages. That changed the hand positions, then which page was removed.',
   ],
-  8: ['And page 1 comes back immediately. The smaller memory hits. The larger memory pays for a page it had room to keep, but clock had already thrown it away.'],
+  8: ['Page 1 comes back on the very next request. The smaller memory still has it. The larger memory must fetch it again.'],
 }
 export const SUMMARY = [
-  'The fourth frame helped twice at first. The different replacement history then cost three faults the smaller memory avoided. It gave back both savings and paid one more.',
+  'The fourth frame saved two faults, then the changed replacements added three. That accounts for the rise from nine faults to ten.',
 ]
-export const BRIDGE = ['Clock can let a larger memory lose something a smaller memory still has. Is that unavoidable, or can another replacement rule prevent it?']
+export const BRIDGE = ["Would keeping the exact recency order prevent the larger memory from losing a page the smaller one keeps?"]
 
 export const DIFFERENCES = BELADY.runs.clock.small.steps.flatMap((small, i) => {
   const big = BELADY.runs.clock.big.steps[i]
@@ -125,11 +123,15 @@ export interface MemoryView {
   bits?: number[]
   hand?: number
   slot?: number | null
+  /** Short action label outside the highlighted slot, e.g. Out, In or Here. */
+  slotLabel?: string
   hit?: boolean
   faults?: number
   caption?: string
   focusPage?: number
   dimPages?: number[]
+  /** Matches shown by screen 13, labelled outside the page tiles. */
+  matchedPages?: number[]
 }
 /** The search projection excludes all explanatory state, including screen-reader hints. */
 export function leakBoard(state: LeakState, size: 'small' | 'big'): MemoryView {

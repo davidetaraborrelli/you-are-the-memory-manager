@@ -75,24 +75,25 @@ export function Frames({
             onClick={() => onChoose(slot)}
             aria-label={label}
             className={[
-              'flex aspect-square select-none flex-col items-center justify-center rounded-xl font-mono text-3xl transition-all duration-200',
+              'memory-slot flex min-w-0 select-none flex-col items-center justify-center font-mono text-3xl transition-all duration-200',
+              stats ? 'min-h-40 px-1 py-3 sm:aspect-square' : 'aspect-square',
               page === null
                 ? 'border-2 border-dashed border-edge text-ink-faint'
                 : 'font-semibold',
               tappable
-                ? 'cursor-pointer ring-2 ring-focus hover:scale-105 active:scale-95'
+                ? 'cursor-pointer ring-2 ring-focus '
                 : 'cursor-default',
               regretPage !== null && page === regretPage ? 'ring-2 ring-fault' : '',
             ].join(' ')}
             style={
               page === null
                 ? undefined
-                : { background: pageColor(page), color: 'var(--color-ground)' }
+                : { background: pageColor(page), color: 'var(--color-page-ink)' }
             }
           >
             <span>{page ?? ''}</span>
             {stats?.[slot] && (
-              <span className="mt-1 flex flex-col items-center font-sans text-[9px] font-normal leading-snug opacity-75">
+              <span className="mt-2 flex w-full min-w-0 flex-col gap-1 text-center font-sans text-xs font-normal leading-snug">
                 {/* One line per signal, in the storyboard's words. Screen 6 asks
                     the learner to follow exactly one of these three and holds
                     them to it, so each has to be readable on its own without
@@ -129,8 +130,8 @@ export function SwappedOut({ pages }: { pages: number[] }) {
       {pages.map((p) => (
         <span
           key={p}
-          className="grid size-6 place-items-center rounded font-mono text-xs opacity-45"
-          style={{ background: pageColor(p), color: 'var(--color-ground)' }}
+          className="grid size-6 place-items-center font-mono text-xs opacity-45"
+          style={{ background: pageColor(p), color: 'var(--color-page-ink)' }}
         >
           {p}
         </span>

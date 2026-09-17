@@ -1,4 +1,6 @@
 import itertools, random
+from fractions import Fraction
+from functools import lru_cache
 
 def fifo(ref, n):
     mem, q, f = set(), [], 0
@@ -513,6 +515,80 @@ def verify_clock_events():
             assert got == clock(ref, n), f'Clock count differs: {ref}, {n} frames'
 
 
+def transfer_example():
+    """Observed file histories and a checkpoint, not a forecast of future requests."""
+    a = ['auth.py', 'tests', 'auth.py', 'config', 'tests', 'auth.py', 'tests']
+    cycle = ['api.py', 'db.py', 'utils.py', 'models.py']
+    b, capacity = cycle * 2, 3
+    at = first_decision(b, capacity)
+    last, returns = {}, []
+    for i, file in enumerate(a):
+        if file in last and i - last[file] <= 2:
+            returns.append([last[file], i])
+        last[file] = i
+    return {
+        'capacity': capacity,
+        'taskA': a, 'taskB': b, 'shortReturns': returns, 'cycleLength': len(cycle),
+        'checkpoint': {
+            'requestIndex': at, 'resident': b[:at], 'incoming': b[at],
+            'victim': b[at - 1], 'nextIndices': [at + 1, at + 2],
+        },
+    }
+
+
+def trace_mru(ref, n):
+    """Replace a resident before loading the new request; retain exact recency."""
+    recency, states, faults = [], [], 0
+    for page in ref:
+        if page in recency:
+            recency.remove(page)
+        else:
+            faults += 1
+            if len(recency) == n:
+                recency.pop()
+        recency.append(page)
+        states.append(tuple(recency))
+    return faults, states
+
+
+def random_expected(ref, n):
+    """Exact expectation over uniform resident evictions on a short tape."""
+    @lru_cache(None)
+    def remaining(i, memory):
+        if i == len(ref):
+            return Fraction(0)
+        page, resident = ref[i], set(memory)
+        if page in resident:
+            return remaining(i + 1, memory)
+        if len(resident) < n:
+            return 1 + remaining(i + 1, tuple(sorted(resident | {page})))
+        return 1 + sum(remaining(i + 1, tuple(sorted((resident - {victim}) | {page})))
+                       for victim in resident) / n
+    return remaining(0, ())
+
+
+def verify_transfer():
+    example = transfer_example()
+    a, b, n, point = example['taskA'], example['taskB'], example['capacity'], example['checkpoint']
+    assert len(set(a)) == n  # A establishes useful recency, not a policy advantage.
+    assert example['shortReturns'] == [[0, 2], [4, 6]]
+    assert b[:4] == b[4:] and len(set(b)) == n + 1
+    assert point == {'requestIndex': 3, 'resident': ['api.py', 'db.py', 'utils.py'],
+                     'incoming': 'models.py', 'victim': 'utils.py', 'nextIndices': [4, 5]}
+    faults, states = trace_mru(b, n)
+    assert faults == opt(b, n) == 5
+    assert lru(b, n) == fifo(b, n) == 8
+    assert faults < random_expected(b, n) < lru(b, n)
+    assert set(states[3]) == {'api.py', 'db.py', 'models.py'}
+    assert all(b[i] in states[i - 1] for i in point['nextIndices'])
+    # The conditional recommendation continues to hold beyond the shown history.
+    for cycles in range(2, 13):
+        tape = b[:4] * cycles
+        assert trace_mru(tape, n)[0] == opt(tape, n)
+        assert trace_mru(tape, n)[0] < random_expected(tape, n) < lru(tape, n)
+    assert trace_mru(['a', 'b', 'a', 'c'], 2)[1][-1] == ('b', 'c'), 'a hit updates recency'
+
+
 def verify():
     """Asserts the lesson's current numerical and pedagogical invariants. Run: python3 sim.py"""
     # Level 1 — first decision winnable by reasoning
@@ -655,6 +731,7 @@ def verify():
     # down by one and the learner's own rule up by one, at the same time.
     assert opt(BELADY, 4) == opt(BELADY, 3) - 1
     assert clock(BELADY, 4) == clock(BELADY, 3) + 1
+    verify_transfer()
     print('all lesson invariants verified')
 
 if __name__ == '__main__':

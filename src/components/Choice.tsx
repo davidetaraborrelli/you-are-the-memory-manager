@@ -38,16 +38,7 @@ export function Choice({
             disabled={disabled || chosen !== null}
             onClick={() => onChoose(o.id)}
             aria-pressed={picked}
-            className={[
-              'rounded-xl border px-4 py-3 text-left text-[15px] transition-all duration-200',
-              chosen === null
-                ? disabled
-                  ? 'border-edge bg-surface text-ink-dim opacity-45'
-                  : 'cursor-pointer border-edge bg-surface hover:border-ink-faint hover:bg-surface-hi'
-                : picked
-                  ? 'border-ink-faint bg-surface-hi'
-                  : 'border-edge bg-surface opacity-35',
-            ].join(' ')}
+            className={`lesson-choice px-4 py-3 text-left text-[15px] ${picked ? 'chosen' : ''}`}
           >
             {o.label}
           </button>

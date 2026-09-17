@@ -44,7 +44,7 @@ const SIGNAL_LABEL: Record<TestRule, string> = {
 // ── Screen 5 · Say your rule out loud ────────────────────────────────────────
 
 export const ASK_THE_RULE = [
-  'In fact, let me ask: when you had to remove a page, what were you mostly going on?',
+  'Which of these best describes the pages you chose to remove?',
 ]
 
 /**
@@ -72,17 +72,17 @@ export const RULE_OPTIONS: { id: DeclaredRule; label: string }[] = [
  */
 export function ruleFeedback(rule: DeclaredRule): string[] {
   const naming =
-    'Oh, and by the way, a rule that makes the same kind of decision consistently is called an **algorithm**.'
+    'A step-by-step rule a computer can follow is an **algorithm**. Here, it will decide which page leaves.'
   if (rule === 'random') {
     return [
-      'Fair enough. You were keeping a lot in your head.',
-      "Next time I'll show you three clean signals from the past. Pick one to trust, then we'll test it exactly.",
+      'Fair enough. Let\'s give you something concrete to go on.',
+      "I'll show you three records of past use. Choose one, and we'll test the rule it suggests.",
       naming,
     ]
   }
   return [
-    'Good. Now it is a hypothesis instead of a feeling. We can test it.',
-    "On the next tape, I'll make that information easier to read. Follow your rule exactly from start to finish.",
+    'That gives us a rule to test. We can see what happens when you follow it every time.',
+    "On the next tape, I'll keep the record your rule uses, so you can read it straight off the board.",
     naming,
   ]
 }
@@ -97,8 +97,8 @@ export function testRuleFor(declared: DeclaredRule | null): TestRule | null {
 export function experimentIntro(): { lines: string[]; focus: (Focus | null)[] } {
   return {
     lines: [
-      "Last time you had to remember the past yourself. This time I'll keep all three records for you.",
-      "We're running an experiment, though. Choose one signal and follow it exactly. No switching halfway when another number looks tempting.",
+      "Each page now shows when it was last used, how long it's been here, and how often it's been used.",
+      "Follow one signal for the whole run. That way, the result tells us how that rule performs.",
     ],
     focus: ['memory', 'memory'],
   }
@@ -191,8 +191,8 @@ export function ruleRows(rule: TestRule | null): {
 }
 
 export const RESULT = [
-  "Here's what would have happened if you'd tested the other rules instead.",
-  `Looks like recency won this test: ${L2.scores.lru} faults instead of ${L2.scores.fifo}.`,
+  "Here's your rule alongside the other two, all tested on the same tape.",
+  `Recency won this test: ${L2.scores.lru} faults instead of ${L2.scores.fifo}. Let's look at one choice that helped.`,
 ]
 
 /** sim.first_signal_fork: the one eviction where the three signals disagree. */
@@ -228,7 +228,7 @@ function afterFork(page: number): string {
 export const FORK_COPY = [
   `At the first fork, all three signals pointed somewhere different. Recency dropped page ${FORK.lru}, and page ${FORK.lru} never came back.`,
   `The arrival-time rule dropped page ${FORK.fifo} because it had been there the longest. But page ${FORK.fifo} came back just ${afterFork(FORK.fifo)}.`,
-  `The frequency rule kept page ${FORK.lru} because it had been used so often, and dropped page ${FORK.lfu} instead. But page ${FORK.lfu} came back too. "Used a lot" did not mean "still useful".`,
+  `Frequency kept page ${FORK.lru} and dropped page ${FORK.lfu}. But ${FORK.lfu} came back. A high use count kept page ${FORK.lru} in memory after the program stopped using it.`,
 ]
 
 /**
@@ -240,9 +240,9 @@ export const FORK_COPY = [
  * the three rules is a stranger by the time it is labelled.
  */
 export const NAMING = [
-  'These three rules are classic **page-replacement algorithms**: rules a memory manager can use to decide which page to evict when memory is full.',
+  'You have now compared three page-replacement algorithms. Each remembers a different part of the past.',
   'Dropping the page that arrived first is **FIFO (First In, First Out)**. Dropping the least frequently used page is **LFU (Least Frequently Used)**.',
-  'Dropping the **least recently used** page is **LRU (Least Recently Used)**. It treats recent use as evidence that a page may be wanted again soon.',
+  'Dropping the page used longest ago is **LRU (Least Recently Used)**.',
 ]
 
 /**
@@ -253,8 +253,8 @@ export const NAMING = [
  * exist to undo.
  */
 export const GENERALISE = [
-  "LRU is often a strong practical bet, and usually the most reliable of the three. That's because programs tend to reuse pages they've touched recently.",
-  'Usually, though! It is still a bet, not a guarantee.',
+  "Programs often return to pages they've used recently. That's why LRU can be a useful rule beyond this tape.",
+  'It is still a bet: recent use is a clue to what comes next.',
 ]
 
 /**

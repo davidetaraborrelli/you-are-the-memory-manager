@@ -24,8 +24,8 @@ export const SCREENS = [
   { n: 10, act: 5, id: 'make-it-executable', title: 'Make the cheap rule executable', built: true },
   { n: 11, act: 6, id: 'one-more-slot', title: 'One more slot', built: true },
   { n: 12, act: 6, id: 'find-the-leak', title: 'Find the leak', built: true },
-  { n: 13, act: 6, id: 'why-lru-cannot', title: 'Why LRU cannot do that', built: false },
-  { n: 14, act: 7, id: 'transfer', title: 'Same problem, different decade', built: false },
+  { n: 13, act: 6, id: 'why-lru-cannot', title: 'Try the same test', built: true },
+  { n: 14, act: 7, id: 'transfer', title: 'From pages to files', built: true },
 ] as const
 
 export const TOTAL_SCREENS = SCREENS.length

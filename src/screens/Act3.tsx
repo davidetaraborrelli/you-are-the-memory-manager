@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Tape } from '@/components/Tape'
 import { Frames, SwappedOut } from '@/components/Frames'
 import { Counter } from '@/components/Counter'
-import { Bubble } from '@/components/Bubble'
+import { Bubble, useVoice } from '@/components/Bubble'
 import { Choice } from '@/components/Choice'
 import { Scoreboard } from '@/components/Scoreboard'
 import { ProgressBar } from '@/components/ProgressBar'
@@ -10,6 +10,7 @@ import { L1, L2, trace } from '@/lib/levels'
 import { advance, createGame, isDone, resolve, swappedOut, type Game } from '@/lib/game'
 import { learnerCommitted, machineGate, resetMachine, setMachineState } from '@/lib/machine'
 import type { Focus } from '@/lib/act1'
+import { optNarrationFace } from '@/lib/portrait-cues'
 import {
   BRIDGE,
   CATEGORY,
@@ -116,6 +117,11 @@ export function Act3({ onDone }: { onDone: () => void }) {
   // act to be built copies from one of them.
   useEffect(() => machineGate('act3:8'), [])
 
+  useEffect(() => {
+    const face = optNarrationFace(phase, lineIdx)
+    if (face) setMachineState(face)
+  }, [phase, lineIdx])
+
   /**
    * The replay. Everything that is not a fork runs on its own: hits pass, and
    * a miss into a free slot resolves itself, because every empty slot is the
@@ -202,15 +208,18 @@ export function Act3({ onDone }: { onDone: () => void }) {
                   ? whyFeedback(answer ?? '')
                   : phase === 'category'
                     ? CATEGORY
-                    // The instruction stays on screen while the machine carries
-                    // it out. An empty bubble beside a board that has started
-                    // moving on its own reads as the screen having lost its
-                    // place.
+                    // Nothing to say while the machine carries the instruction
+                    // out: the bubble holds the line that asked for it, which
+                    // is useVoice's job and no longer this expression's.
                     : phase === 'measure'
-                      ? [CATEGORY[CATEGORY.length - 1]]
+                      ? []
                       : phase === 'measured'
                         ? MEASURED
                         : BRIDGE
+
+  // The replay runs itself wherever it holds no decision, and beat 6's
+  // demonstration runs itself to the end. Both keep the line that set them off.
+  const voice = useVoice(lines, lineIdx)
 
   const groupKey = `${phase}:${game.awaiting?.step ?? game.cursor}:${refusal ? 'no' : confirm ? 'yes' : '-'}:${answer ?? ''}:${taps}`
   useEffect(() => setLineIdx(0), [groupKey])
@@ -272,7 +281,7 @@ export function Act3({ onDone }: { onDone: () => void }) {
 
   const lit: Region | null = focus === 'mask' ? 'tape' : focus
   const region = (r: Region) => {
-    const base = 'rounded-xl px-3 py-2 -mx-3 transition-all duration-300'
+    const base = 'px-3 py-2 -mx-3 transition-all duration-300'
     if (lit) return lit === r ? `${base} bg-surface/40 ring-1 ring-edge` : `${base} opacity-30`
     return r === 'memory' && speaking ? `${base} opacity-45` : base
   }
@@ -305,7 +314,7 @@ export function Act3({ onDone }: { onDone: () => void }) {
   return (
     <>
       <ProgressBar screen={8} />
-      <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-6 px-5 py-12">
+      <main className="mx-auto flex lesson-content max-w-2xl flex-col justify-center gap-6 px-5 py-12">
         <div className={region('tape')}>
           <Tape
             tape={shown.level.ref}
@@ -332,7 +341,7 @@ export function Act3({ onDone }: { onDone: () => void }) {
           />
         </div>
 
-        <div className={`flex items-center justify-between ${region('counter')}`}>
+        <div className={`flex flex-wrap items-center justify-between gap-3 ${region('counter')}`}>
           <SwappedOut pages={swappedOut(shown.g)} />
           <Counter faults={shown.g.faults} named lit={lit === 'counter'} />
         </div>
@@ -348,8 +357,8 @@ export function Act3({ onDone }: { onDone: () => void }) {
 
         <div className="min-h-44">
           <Bubble
-            lines={lines}
-            index={lineIdx}
+            lines={voice.lines}
+            index={voice.index}
             onNext={() => setLineIdx((n) => n + 1)}
             onDone={onDoneLines}
             doneLabel={phase === 'bridge' ? 'Show me' : phase === 'open' ? 'Play it again' : 'Got it'}

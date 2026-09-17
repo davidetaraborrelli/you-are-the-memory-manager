@@ -158,6 +158,21 @@ export interface BeladyRun<P extends Policy = Policy> {
 
 export interface LevelData {
   generatedBy: string
+  transfer: {
+    capacity: number
+    taskA: string[]
+    taskB: string[]
+    /** Zero-based pairs of observed requests showing quick returns. */
+    shortReturns: [number, number][]
+    cycleLength: number
+    checkpoint: {
+      requestIndex: number
+      resident: string[]
+      incoming: string
+      victim: string
+      nextIndices: number[]
+    }
+  }
   clockQuickCheck: {
     initialFrames: number[]
     initialBits: number[]
@@ -185,7 +200,7 @@ export type MachineState =
   | 'neutral'
   | 'approval'
   | 'correction'
-  | 'smug'
+  | 'satisfied'
   | 'apologetic'
   | 'withholding'
 

@@ -44,8 +44,8 @@ function series(pages: number[], last = 'and'): string {
 
 export const OPEN: { lines: string[]; focus: (Focus | null)[] } = {
   lines: [
-    "Here's level one again, but now the run is over. Every request it ever made can stay visible on the tape.",
-    `Same ${L1.frames} slots. Same ${L1.length} requests. Same job. This time, nothing on the tape is hidden.`,
+    "Here's the completed level-one tape. This time, you can see every request before you choose.",
+    `Same ${L1.frames} slots, same ${L1.length} requests. How few faults can you get with this extra information?`,
   ],
   focus: ['tape', 'tape'],
 }
@@ -74,7 +74,7 @@ export function askAt(d: Decision): string[] {
   const i = DECISIONS.indexOf(d)
   if (i === 0) {
     return [
-      'Last time you could only use what had already happened to make your guesses. This time, look to the right too to help you!',
+      'Look to the right of the current request. You can now check when each page comes back.',
       'Which page do you think is safest to drop?',
     ]
   }
@@ -151,7 +151,7 @@ export function verdict(d: Decision, page: number): string[] {
 export const WHOLE_TAPE: { lines: string[]; focus: (Focus | null)[] } = {
   lines: [
     `That's the whole tape. ${FLOOR.achieved} faults.`,
-    `But how do we know ${FLOOR.achieved} is REALLY the floor, and not just a very good run?`,
+    `Could any other set of choices get fewer than ${FLOOR.achieved}? Let's check.`,
   ],
   focus: ['tape', 'counter'],
 }
@@ -167,7 +167,7 @@ export const WHOLE_TAPE: { lines: string[]; focus: (Focus | null)[] } = {
 export const PROOF: { lines: string[]; focus: (Focus | null)[] } = {
   lines: [
     `Pages ${series(Object.keys(FLOOR.firstUses).map(Number))} each have to enter memory at least once. That's ${FLOOR.unavoidable} faults nobody can avoid.`,
-    `When page ${FLOOR.forcedRequest} arrives, one of ${series(FLOOR.resident, 'or')} has to leave, and every one of them is requested again later. So at least ONE MORE fault is unavoidable.`,
+    `When page ${FLOOR.forcedRequest} arrives, one of ${series(FLOOR.resident, 'or')} must leave. All of them return later, so at least one must be fetched again. That's one more unavoidable fault.`,
     `So for this run, ${FLOOR.achieved} faults isn't just a good score. It's the minimum possible.`,
   ],
   focus: ['tape', 'tape', 'counter'],
@@ -211,11 +211,10 @@ export function proofMarks(stage: number): number[] {
 
 export const EXTRACT: { lines: string[]; focus: (Focus | null)[] } = {
   lines: [
-    'Look again at the two choices you made. Each time you kept the pages coming back sooner, and dropped the one coming back last, or never.',
-    'Any other choice throws out a page that comes back sooner.',
-    'What you just did has a name: **OPT**, optimal page replacement. Nothing scores lower, because you just played the floor.',
+    'Both choices followed the same rule: drop the page whose next request is farthest away, or that never returns.',
+    'That rule is **OPT**, optimal page replacement. With the full future known, it reaches the fewest possible faults for a tape and memory size.',
   ],
-  focus: ['tape', 'tape', null],
+  focus: ['tape', null],
 }
 
 export const WHY_NOT = ["So why don't real memory managers use it on live runs?"]
@@ -240,8 +239,7 @@ export function whyFeedback(id: string): string[] {
     ]
   }
   return [
-    'Exactly. OPT needs the exact future request stream. During a live run, those requests have not happened yet.',
-    'A real policy can predict from the past. OPT needs more than a prediction. It needs the exact future.',
+    'Exactly. You could make those choices because the full tape was visible. A live memory manager does not have that future record.',
   ]
 }
 
@@ -260,8 +258,8 @@ const CLOSE = L2.scores.lru - L2.scores.opt
  * survive contact.
  */
 export const CATEGORY = [
-  'So OPT is not another algorithm to run. It is a benchmark: after a tape finishes, it tells us how good any algorithm could have been.',
-  "So now we can measure how our last run really did. Let's go back to level two for a moment, and I'll play that tape as OPT.",
+  'We can use OPT as a **benchmark**: the lowest fault count possible for a completed tape and a given memory size.',
+  "Let's replay level two with OPT and compare its result with LRU, the rule that won our test.",
 ]
 
 /**
@@ -279,8 +277,7 @@ export const CATEGORY = [
  * this collects on that.
  */
 export const MEASURED = [
-  `For this tape, OPT is ${L2.scores.opt}. LRU came within ${CLOSE} fault of perfect future knowledge.`,
-  'Not bad! As I said, exact recency is usually a strong practical bet. Now you have the proof.',
+  `OPT took ${L2.scores.opt} faults. LRU was just ${CLOSE} fault above that minimum, using only the past.`,
 ]
 
 /**
@@ -302,6 +299,5 @@ export function rulerRows() {
 }
 
 export const BRIDGE = [
-  'That makes exact recency worth having. Notice I used the term EXACT. Turns out, exact information comes at a price.',
-  'And price, in computing, almost always means "resources". Let\'s see.',
+  'LRU made that choice using an exact record of recent use. What does it take to keep that record up to date?',
 ]

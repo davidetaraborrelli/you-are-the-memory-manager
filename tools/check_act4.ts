@@ -1,8 +1,20 @@
 import assert from 'node:assert/strict'
 import { CLOCK, COST_OPTIONS, GUIDE, RECENCY, guideBoard, guideReducer, initialGuide, type GuideAction } from '../src/lib/act4.ts'
+import { resetMachine, machineGate, learnerCommitted, tellRuleBroken } from '../src/lib/machine.ts'
 
 let state = initialGuide()
-const act = (action: GuideAction) => { state = guideReducer(state, action) }
+resetMachine()
+machineGate('guide:0')
+const act = (action: GuideAction) => {
+  const next = guideReducer(state, action)
+  if (next === state) return
+  if (action.type === 'choose' || action.type === 'answer') learnerCommitted()
+  assert.equal(tellRuleBroken(next.reaction), false, `unearned ${next.reaction} at ${GUIDE[next.beat]?.id}`)
+  if (next.beat !== state.beat && ['question', 'explore', 'inspect', 'evict'].includes(GUIDE[next.beat]?.action)) {
+    machineGate(`guide:${next.beat}`)
+  }
+  state = next
+}
 const id = () => GUIDE[state.beat]?.id
 const read = () => {
   while (state.line < GUIDE[state.beat].lines.length - 1) act({ type: 'next' })
@@ -37,6 +49,7 @@ assert.equal(id(), 'cost', 'Next cannot bypass the question')
 act({ type: 'answer', id: 'use' })
 assert.equal(state.reaction, 'approval')
 continueTo('equal')
+assert.equal(state.reaction, 'neutral', 'do not give away the information limit before exploration')
 assert.deepEqual(guideBoard(state).frames, [1, 3, 2])
 assert.deepEqual(guideBoard(state).bits, [1, 1, 1])
 assert.equal(guideBoard(state).faults, 3)
@@ -45,16 +58,20 @@ act({ type: 'choose', slot: 0 })
 act({ type: 'choose', slot: 0 })
 assert.equal(state.explored.length, 1, 'repeated inspection cannot skip the other pages')
 act({ type: 'choose', slot: 2 })
+assert.equal(state.reaction, 'neutral', 'two inspected pages have not earned the apology')
 act({ type: 'choose', slot: 1 })
 assert.equal(id(), 'first-inspection')
+assert.equal(state.reaction, 'apologetic', 'acknowledge the limit only after all three pages were inspected')
 const explaining = state
 act({ type: 'choose', slot: 0 })
 assert.equal(state, explaining, 'no bit changes before the instruction has finished')
 read()
+assert.equal(state.reaction, 'neutral', 'return to neutral when proposing the bit rule')
 act({ type: 'choose', slot: 1 })
 assert.equal(id(), 'first-inspection', 'only the current inspection executes')
 act({ type: 'choose', slot: 0 })
 assert.deepEqual(guideBoard(state).bits, [0, 1, 1])
+assert.equal(state.reaction, 'approval', 'the learner cleared a bit and spared the page')
 assert.deepEqual(guideBoard(state).frames, [1, 3, 2], 'an inspection is not an eviction')
 continueTo('inspect-middle')
 act({ type: 'choose', slot: 1 })
@@ -73,6 +90,7 @@ assert.deepEqual(guideBoard(state).frames, CLOCK[3].frames)
 assert.deepEqual(guideBoard(state).bits, CLOCK[3].bits)
 assert.equal(guideBoard(state).faults, 4)
 continueTo('restored')
+assert.equal(state.reaction, 'approval', 'react only after the visible hit restores the bit')
 assert.deepEqual(guideBoard(state).bits, [1, 1, 0], 'the hit restores page 3, not every bit')
 assert.equal(guideBoard(state).faults, 4, 'a hit is free')
 continueTo('resume')
@@ -93,7 +111,12 @@ act({ type: 'choose', slot: 2 })
 assert.deepEqual(guideBoard(state).frames, CLOCK[5].frames)
 assert.deepEqual(guideBoard(state).bits, CLOCK[5].bits)
 assert.equal(guideBoard(state).faults, 5)
+read()
+assert.equal(state.reaction, 'neutral', 'technical explanation follows the specific approval')
+continueTo('compression-earned')
+assert.equal(state.reaction, 'satisfied', 'the completed two-replacement discovery earns satisfaction')
 continueTo('bridge')
+assert.equal(state.reaction, 'neutral')
 act({ type: 'next' })
 assert.equal(state.beat, GUIDE.length, 'the bridge finishes screen 9')
 

@@ -1,60 +1,61 @@
+@layer theme, base, retro, components, utilities;
 @import "tailwindcss";
+@import "98.css" layer(retro);
 
-/* ---------------------------------------------------------------------------
-   Design tokens.
-   The lesson is dark-only by design decision (PROGETTO.md §8 puts dark mode
-   out of scope — this *is* the mode, there is no other to toggle to).
-   --------------------------------------------------------------------------- */
+/* 98.css supplies the native controls, window chrome and bundled pixel font. */
 /* `static` matters: Tailwind v4 drops theme variables no utility class
    references, and the page colours are only ever read through var() from
    inline styles, so without it they resolve to nothing. */
 @theme static {
-  --color-ground: oklch(0.17 0.012 260);
-  --color-surface: oklch(0.22 0.014 260);
-  --color-surface-hi: oklch(0.27 0.016 260);
-  --color-edge: oklch(0.34 0.018 260);
-  --color-ink: oklch(0.94 0.005 260);
-  --color-ink-dim: oklch(0.68 0.012 260);
-  --color-ink-faint: oklch(0.48 0.014 260);
+  --color-ground: #008080;
+  --color-surface: #c0c0c0;
+  --color-surface-hi: #dfdfdf;
+  --color-edge: #808080;
+  --color-ink: #222222;
+  --color-ink-dim: #444444;
+  --color-ink-faint: #555555;
 
-  --color-hit: oklch(0.76 0.17 150);
-  --color-fault: oklch(0.70 0.19 25);
-  --color-focus: oklch(0.80 0.15 85);
+  --color-hit: #006000;
+  --color-fault: #a00000;
+  --color-focus: #000080;
   /* Key terms in the voice. Deliberately outside the page hues so a bolded
      word is never mistaken for a page identity. */
-  --color-key: oklch(0.86 0.09 210);
+  --color-key: #000080;
 
   /* Page identity colours. Six distinct hues; the page number is always
      printed on top, so nothing is encoded in colour alone. */
-  --color-page-1: oklch(0.72 0.14 20);
-  --color-page-2: oklch(0.74 0.13 60);
-  --color-page-3: oklch(0.76 0.13 115);
-  --color-page-4: oklch(0.72 0.12 175);
-  --color-page-5: oklch(0.68 0.13 250);
-  --color-page-6: oklch(0.70 0.14 310);
+  --color-page-1: #f0a0a0;
+  --color-page-2: #f0c080;
+  --color-page-3: #d8df80;
+  --color-page-4: #80c8b0;
+  --color-page-5: #90b8e8;
+  --color-page-6: #c8a0d8;
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --color-page-ink: #111111;
+  --font-sans: "Pixelated MS Sans Serif", Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
 }
 
 html {
   background: var(--color-ground);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   background: var(--color-ground);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
+  -webkit-font-smoothing: none;
   /* The lesson is one screen at a time; the page itself never scrolls
      horizontally and rarely vertically. */
   overflow-x: hidden;
   overscroll-behavior-y: none;
 }
 
-/* The machine portrait is pixel art at integer scale. Never smooth it. */
+/* Keep the approved raster artwork crisp when displaying the atlas crops. */
 .pixelated {
   image-rendering: pixelated;
 }
@@ -113,4 +114,61 @@ body {
     border-color: var(--color-focus);
     background: var(--color-surface-hi);
   }
+}
+
+/* Layout surrounds the original 98.css components; their bevels and control
+   states come from the package. Utilities retain sizing needed by the boards. */
+@layer components {
+  /* 98.css's demo headings are oversized for labels inside a lesson board. */
+  .lesson-body :is(h1, h2, h3, h4) { font-size: inherit; line-height: inherit; }
+}
+body { font-size: 14px; }
+.desktop { min-height: 100dvh; padding: 32px 20px 64px; }
+.lesson-window { width: min(100%, 820px); margin: 0 auto; color: var(--color-ink); }
+.lesson-title { display: flex; align-items: center; gap: 7px; }
+.lesson-window > .title-bar { min-height: 26px; }
+.lesson-window > .title-bar .title-bar-controls button { min-width: 22px; min-height: 20px; background-position: center; }
+.lesson-body { margin: 0; }
+.lesson-content { min-height: 0; width: 100%; padding: 28px 32px 20px; }
+.lesson-progress { height: 16px; margin: 12px 12px 0; }
+.lesson-status { margin-top: 6px; }
+.lesson-status .status-bar-field { margin: 0; padding: 5px 7px; }
+.desktop-maximized { padding: 0 0 40px; }
+.desktop-maximized .lesson-window { width: 100%; min-height: calc(100dvh - 40px); }
+.desktop-taskbar { position: fixed; z-index: 60; bottom: 0; left: 0; right: 0; display: flex; align-items: center; gap: 12px; min-height: 36px; padding: 4px; background: silver; box-shadow: inset 0 1px #fff, inset 0 2px #dfdfdf; }
+.taskbar-program { display: flex; align-items: center; gap: 7px; width: 210px; padding: 3px 8px; font-weight: bold; color: var(--color-ink); }
+.taskbar-caption { margin-left: auto; padding: 4px 10px; color: var(--color-ink); }
+/* A small CSS computer icon keeps the shell self-contained. */
+.computer-icon { display: inline-block; position: relative; width: 16px; height: 14px; flex: 0 0 16px; border: 2px outset #dfdfdf; background: #008080; box-shadow: 1px 1px #000; }
+.computer-icon::after { content: ''; position: absolute; width: 18px; height: 3px; background: silver; border: 1px outset #fff; left: -3px; bottom: -5px; }
+.tutor-window { width: 100%; color: var(--color-ink); }
+.tutor-body { display: flex; gap: 16px; padding: 8px; margin: 8px; }
+.tutor-message { margin: 0; min-height: 48px; }
+.machine-portrait { display: block; width: 96px; height: 96px; overflow: hidden; }
+.lesson-body button { cursor: pointer; }
+.lesson-body button:disabled { cursor: default; }
+.lesson-body button:not(.memory-slot):not(.tape-cell) { min-height: 36px; border: 0; }
+.lesson-choice { width: 100%; line-height: 1.5; }
+.lesson-choice.chosen { outline: 1px dotted #000; outline-offset: -6px; color: #222; text-shadow: none; font-weight: bold; }
+.memory-slot, .tape-cell { min-width: 0; text-shadow: none; }
+.memory-slot:disabled, .tape-cell:disabled { text-shadow: none; }
+.memory-slot { padding: 8px 4px; }
+.memory-slot[class*="ring-2"], .tape-cell[class*="ring-2"] { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+.memory-slot[class*="ring-fault"] { outline-color: var(--color-fault); }
+.memory-slot[class*="ring-hit"] { outline-color: var(--color-hit); }
+.lesson-body table { width: 100%; white-space: normal; }
+.lesson-body table td, .lesson-body table th { padding: 8px; }
+.lesson-body table caption { background: silver; }
+.lesson-body input[type="text"] { height: auto; }
+.lesson-body input[aria-invalid="true"] { outline: 2px solid var(--color-fault); }
+.code-editor { background: #fff; }
+@media (max-width: 639px) {
+  .desktop { padding: 8px 6px 48px; }
+  .desktop-maximized { padding: 0 0 40px; }
+  .lesson-content { padding: 20px 14px 12px; gap: 20px; }
+  .tutor-body { gap: 10px; margin: 6px; padding: 4px; }
+  .machine-portrait { width: 64px; height: 64px; }
+  .lesson-body button:not(.memory-slot):not(.tape-cell) { min-height: 44px; }
+  .taskbar-caption { display: none; }
+  .lesson-status .status-bar-field { font-size: 10px; }
 }

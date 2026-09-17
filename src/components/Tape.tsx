@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { pageColor } from '@/lib/levels'
 
 /**
@@ -35,8 +36,8 @@ export function Tape({
    */
   lit?: boolean
   /**
-   * Show the whole tape at once, shrunk to fit, with no marker and nothing
-   * clipped.
+   * Show the whole tape at once, with no marker and nothing clipped. Long
+   * tapes wrap into two rows on phones, read left to right, then top to bottom.
    *
    * Screen 8 proves the floor by pointing at the first appearance of each page,
    * and on level 1 three of those are at steps 1, 2 and 3 while the run has
@@ -61,8 +62,8 @@ export function Tape({
     if (onSelect) return <button key={i} type="button" disabled={selectionDisabled}
       onClick={() => onSelect(i + 1)} aria-label={`After request ${i + 1}, page ${page}`}
       aria-pressed={i === cursor}
-      className={`flex min-h-11 flex-col items-center justify-center rounded-md font-mono text-sm ${i === cursor ? 'ring-2 ring-focus ring-offset-2 ring-offset-ground font-semibold' : ''}`}
-      style={{ background: pageColor(page), color: 'var(--color-ground)' }}>
+      className={`tape-cell flex min-h-11 flex-col items-center justify-center font-mono text-sm ${i === cursor ? 'ring-2 ring-focus ring-offset-2 ring-offset-surface font-semibold' : ''}`}
+      style={{ background: pageColor(page), color: 'var(--color-page-ink)' }}>
       <span className="text-[9px]">{i + 1}</span><span>{page}</span>
     </button>
     const past = !fit && i < cursor
@@ -74,7 +75,7 @@ export function Tape({
       <div
         key={i}
         className={[
-          'grid aspect-square shrink-0 select-none place-items-center rounded-md',
+          'tape-cell grid aspect-square shrink-0 select-none place-items-center ',
           'font-mono transition-all duration-300',
           fit ? 'w-full text-xs' : 'w-[calc(var(--pitch)-0.5rem)] text-sm',
           hidden ? 'border border-dashed border-edge bg-surface' : '',
@@ -88,7 +89,7 @@ export function Tape({
           marked ? 'scale-105 opacity-100 ring-2 ring-focus' : '',
           marks.length > 0 && !marked ? 'opacity-25' : '',
         ].join(' ')}
-        style={hidden ? undefined : { background: pageColor(page), color: 'var(--color-ground)' }}
+        style={hidden ? undefined : { background: pageColor(page), color: 'var(--color-page-ink)' }}
         aria-hidden={hidden}
       >
         {hidden ? '' : page}
@@ -107,8 +108,8 @@ export function Tape({
       </p>
       {onSelect ? <div className="grid grid-cols-4 gap-2 py-3 sm:grid-cols-12">{tape.map(cell)}</div> : fit ? (
         <div
-          className="grid gap-1 py-3"
-          style={{ gridTemplateColumns: `repeat(${tape.length}, minmax(0, 1fr))` }}
+          className="grid grid-cols-[repeat(var(--mobile-columns),minmax(0,1fr))] gap-1 py-3 sm:grid-cols-[repeat(var(--tape-columns),minmax(0,1fr))]"
+          style={{ '--mobile-columns': tape.length > 8 ? Math.ceil(tape.length / 2) : tape.length, '--tape-columns': tape.length } as CSSProperties}
         >
           {tape.map(cell)}
         </div>
@@ -116,7 +117,7 @@ export function Tape({
         <div className="relative overflow-hidden py-3">
           {/* The marker the tape runs under. */}
           <div
-            className="pointer-events-none absolute inset-y-3 left-[var(--tape-anchor)] z-10 w-[calc(var(--pitch)-0.5rem)] rounded-md ring-2 ring-focus"
+            className="pointer-events-none absolute inset-y-3 left-[var(--tape-anchor)] z-10 w-[calc(var(--pitch)-0.5rem)] ring-2 ring-focus"
             aria-hidden
           />
           <div

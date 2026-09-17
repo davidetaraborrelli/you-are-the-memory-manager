@@ -5,9 +5,10 @@ import { Act3 } from '@/screens/Act3'
 import { Act4 } from '@/screens/Act4'
 import { Act5 } from '@/screens/Act5'
 import { Act6 } from '@/screens/Act6'
-import { SCREENS } from '@/lib/screens'
+import { Act7 } from '@/screens/Act7'
 import type { DeclaredRule } from '@/lib/types'
 import { pythonRuntime } from '@/lib/python-runtime'
+import { Desktop } from '@/components/Desktop'
 
 /**
  * The lesson. Acts run in sequence and the state that crosses between them
@@ -30,7 +31,8 @@ const RUNS = [
   { act: 3, screens: [8] },
   { act: 4, screens: [9] },
   { act: 5, screens: [10] },
-  { act: 6, screens: [11, 12] },
+  { act: 6, screens: [11, 12, 13] },
+  { act: 7, screens: [14] },
 ]
 
 /**
@@ -40,8 +42,8 @@ const RUNS = [
  * been played, so there is nothing coherent to drop the learner into halfway
  * through: asking for screen 6 starts level 2 at its beginning, and asking for
  * screen 8 lands exactly on it because that run is one screen long.
- * Screen 12 is a completed-run inspector, so its dev link can open directly
- * with the canonical results of screen 11 already available.
+ * Screens 12 and 13 inspect completed runs, so their dev links can open
+ * directly with canonical results already available.
  *
  * `import.meta.env.DEV` is replaced by a literal at build time, so this whole
  * branch is gone from the bundle a visitor loads.
@@ -53,6 +55,10 @@ function startingAct(): number {
 }
 
 export default function App() {
+  return <Desktop><Lesson /></Desktop>
+}
+
+function Lesson() {
   const [act, setAct] = useState(startingAct)
   const [declared, setDeclared] = useState<DeclaredRule | null>(null)
   const [reference, setReference] = useState(true)
@@ -64,34 +70,7 @@ export default function App() {
   if (act === 4) return <Act4 onDone={() => setAct(5)} />
   if (act === 5) return <Act5 onDone={(usedReference) => { setReference(usedReference); setAct(6) }} />
   if (act === 6) return <Act6 reference={reference} onDone={() => setAct(7)}
-    initialInspect={import.meta.env.DEV && new URLSearchParams(window.location.search).get('screen') === '12'} />
-  return <NotBuiltYet />
-}
-
-/**
- * Where the built lesson stops. Acts are built in order (see src/lib/screens.ts)
- * and screen 13 is next; until it exists the bridge at the end of screen 12 has
- * somewhere honest to land instead of a button that does nothing.
- *
- * This is scaffolding, not lesson copy. It goes when the last act arrives.
- */
-function NotBuiltYet() {
-  const rest = SCREENS.filter((s) => !s.built)
-  return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col justify-center gap-3 px-5 py-12 text-sm text-ink-dim">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-ink-faint">
-        end of what is built
-      </p>
-      <p>
-        Screens {rest[0].n} to {rest[rest.length - 1].n} are still storyboard only.
-      </p>
-      <ol className="list-inside list-decimal space-y-1">
-        {rest.map((s) => (
-          <li key={s.id} value={s.n}>
-            {s.title}
-          </li>
-        ))}
-      </ol>
-    </main>
-  )
+    initialScreen={import.meta.env.DEV && new URLSearchParams(window.location.search).get('screen') === '13' ? 13
+      : import.meta.env.DEV && new URLSearchParams(window.location.search).get('screen') === '12' ? 12 : 11} />
+  return <Act7 />
 }

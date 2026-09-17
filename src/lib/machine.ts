@@ -76,9 +76,8 @@ export function tellRuleBroken(next: MachineState): boolean {
 
 export function setMachineState(next: MachineState) {
   // The tell rule, made mechanical. A dealer has no tells: the face may only
-  // react to something the learner has already done. While the portrait is a
-  // text box this is a legible bug rather than a judgement call, which is the
-  // whole reason the placeholder exists.
+  // react to something the learner has already done. The rendered portrait
+  // also exposes data-machine-state so this stays inspectable with real art.
   if (import.meta.env?.DEV && tellRuleBroken(next)) {
     console.warn(
       `[tell rule] machine went "${next}" before the learner committed` +

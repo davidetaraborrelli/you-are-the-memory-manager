@@ -1,45 +1,35 @@
 import { useMachineState } from '@/lib/machine'
+import type { MachineState } from '@/lib/types'
+import sheet from '@/assets/tutor/avatar-sheet-transparent.png'
 
-/**
- * The machine's portrait.
- *
- * Until the sprite sheet exists (the final task of the project) this renders
- * the state as a word, at the size and position the finished sprite will
- * occupy. That is deliberate: while the face is a word, a leaked tell is
- * readable in plain text instead of being an impression.
- *
- * Swapping in the art means replacing the contents of <Face> and nothing else.
- */
-
-const LABEL: Record<string, string> = {
-  neutral: 'NEUTRAL',
-  approval: 'APPROVE',
-  correction: 'CORRECT',
-  smug: 'SMUG',
-  apologetic: 'SORRY',
-  withholding: 'WITHHOLD',
-}
-
-function Face({ state }: { state: string }) {
-  // --- placeholder ---------------------------------------------------------
-  // Replaced wholesale by <img src={sprite} style={{objectPosition}} /> once
-  // the sheet is drawn. 32x32 base, rendered at 3x = 96px.
-  return (
-    <div className="grid h-full w-full place-items-center bg-surface-hi font-mono text-[10px] tracking-widest text-ink-dim">
-      {LABEL[state] ?? state.toUpperCase()}
-    </div>
-  )
+// Always reuse the approved neutral computer. Only its display changes, so
+// generated variations in the housing can never make the body jump.
+const FACE: Record<MachineState, { screen: string; label: string }> = {
+  neutral: { screen: '216 107 176 160', label: 'attentive' },
+  approval: { screen: '684 107 176 160', label: 'approving' },
+  correction: { screen: '1168 107 176 160', label: 'gently correcting' },
+  apologetic: { screen: '216 590 176 160', label: 'apologetic' },
+  withholding: { screen: '684 590 176 160', label: 'holding back a reveal' },
+  satisfied: { screen: '1168 590 176 160', label: 'proud of your progress' },
 }
 
 export function MachinePortrait() {
   const state = useMachineState()
+  const face = FACE[state]
   return (
-    <div
-      className="pixelated size-24 shrink-0 select-none overflow-hidden rounded-sm border border-edge"
+    <svg
+      className="machine-portrait pixelated shrink-0 select-none"
+      viewBox="0 0 384 384"
+      width="96"
+      height="96"
       role="img"
-      aria-label={`the machine, ${state}`}
+      aria-label={`The machine, ${face.label}`}
+      data-machine-state={state}
     >
-      <Face state={state} />
-    </div>
+      <image href={sheet} x="-112" y="-44" width="1536" height="1024" />
+      <svg x="104" y="63" width="176" height="160" viewBox={face.screen} overflow="hidden">
+        <image href={sheet} width="1536" height="1024" />
+      </svg>
+    </svg>
   )
 }

@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { MachinePortrait } from './MachinePortrait'
 
 /**
@@ -18,6 +19,46 @@ function render(line: string) {
   )
 }
 
+export interface Spoken {
+  lines: string[]
+  index: number
+  /** Remount key for the bubble, held with the line it belongs to. */
+  key: string
+  /**
+   * True while the last line is being kept on screen. The group it belongs to
+   * is over, so its closing button must not be offered a second time: a caller
+   * whose `onDone` does not already fall away here has to suppress it.
+   */
+  held: boolean
+}
+
+/**
+ * What the bubble shows, which is not always what the voice has to say.
+ *
+ * A group with no lines of its own is not silence. It is the board playing
+ * while the machine stands beside what it just told you: the tape running
+ * through hits between two beats, a recorded run played back, a comparison
+ * ticking along on its own. Emptying the bubble there takes the last thing
+ * said away at exactly the moment the learner looks up from the board to check
+ * what they were asked to watch for, and an empty bubble beside a board that
+ * has started moving reads as the screen having lost its place.
+ *
+ * So the last line stays until the voice has something else to say. The index
+ * and the remount key are held with it, which is what makes it the *same* line
+ * rather than a new one arriving: React keeps the paragraph it already
+ * mounted, and the fade does not replay.
+ *
+ * Screen 8 used to do this by hand for its one demonstration, by naming the
+ * line it wanted left standing. Every other automatic stretch of the lesson
+ * went blank.
+ */
+export function useVoice(lines: string[], index: number, key = ''): Spoken {
+  const held = useRef<Spoken>({ lines: [], index: 0, key: '', held: true })
+  if (lines.length > 0) held.current = { lines, index, key, held: false }
+  else if (!held.current.held) held.current = { ...held.current, held: true }
+  return held.current
+}
+
 /**
  * The voice, beside the portrait — one bubble at a time.
  *
@@ -30,7 +71,8 @@ function render(line: string) {
  * The position in the group is owned by the caller, not by this component,
  * because the board needs to know whether the voice has finished: while it is
  * still speaking, the frames are inert. Turn-taking is only legible if exactly
- * one thing is ever asking to be touched.
+ * one thing is ever asking to be touched. It is also what lets a caller with
+ * nothing to say hand back the group it said last — see useVoice.
  */
 export function Bubble({
   lines,
@@ -52,24 +94,26 @@ export function Bubble({
   const last = index >= lines.length - 1
 
   return (
-    <div className="flex items-start gap-4">
+    <div className="window tutor-window">
+      <div className="title-bar inactive"><div className="title-bar-text">The machine</div></div>
+      <div className="window-body tutor-body">
       <MachinePortrait />
       <div className="flex min-w-0 flex-1 flex-col items-start gap-3">
         {line && (
           <p
             key={index}
-            className="animate-[fade-in_240ms_ease-out] rounded-2xl rounded-tl-none border border-edge bg-surface px-4 py-3 text-[15px] leading-relaxed"
+            className="animate-[fade-in_240ms_ease-out] tutor-message text-[15px] leading-relaxed"
           >
             {render(line)}
           </p>
         )}
 
         {(onDone || !last) && (
-          <div className="flex items-center gap-3">
+          <div className="flex max-w-full flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => (last ? onDone?.() : onNext())}
-              className="rounded-lg bg-ink px-4 py-2 text-sm font-medium text-ground transition-opacity hover:opacity-85"
+              className="default min-h-11 max-w-full px-4 py-2 text-sm font-medium transition-opacity hover:opacity-85"
             >
               {last ? doneLabel : nextLabel}
             </button>
@@ -78,7 +122,7 @@ export function Bubble({
                 {lines.map((_, n) => (
                   <span
                     key={n}
-                    className={`size-1.5 rounded-full transition-colors ${
+                    className={`size-1.5 transition-colors ${
                       n <= index ? 'bg-ink-faint' : 'bg-surface-hi'
                     }`}
                   />
@@ -87,6 +131,7 @@ export function Bubble({
             )}
           </div>
         )}
+      </div>
       </div>
     </div>
   )
