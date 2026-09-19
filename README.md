@@ -109,6 +109,14 @@ between screens, so `src/screens/` holds one module per *act*, not per screen.
 
 ## Layout
 
+Every act groups the activity above the tutor in `.lesson-activity`. At viewport
+sizes of at least 768 × 800px, a shared, adaptive minimum height absorbs smaller
+content changes. The two-memory comparisons also reserve space for controls,
+evidence and tables below the board. Long content can still grow naturally;
+empty activity areas and the short Python introduction do not add blank space.
+Smaller viewports keep the compact flow. This reduces movement rather than
+fixing the tutor to the viewport; visual verification of the extension is pending.
+
 | Path | What lives there |
 |---|---|
 | `tools/` | The Python oracle and the data generator |

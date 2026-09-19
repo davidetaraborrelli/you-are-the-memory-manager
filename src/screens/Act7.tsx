@@ -36,11 +36,13 @@ export function Act7() {
   return <>
     <ProgressBar screen={14} />
     <main className="mx-auto flex lesson-content max-w-2xl flex-col justify-center gap-6 px-5 py-10 sm:py-12">
-      <h1 className="font-mono text-[10px] uppercase tracking-widest text-ink-dim">From pages to files</h1>
-      <TransferBoard state={state} />
-      <section ref={question} tabIndex={-1} aria-label={state.phase === 'ending' ? 'Closing question' : QUESTIONS[state.stage][0]} className="space-y-6 outline-none">
-        {choicesVisible && <Choice options={OPTIONS[state.stage]} chosen={state.chosen} disabled={state.phase !== 'question'}
-          onChoose={(id) => send({ type: 'choose', id })} />}
+      <section ref={question} tabIndex={-1} aria-label={state.phase === 'ending' ? 'Closing question' : QUESTIONS[state.stage][0]} className="flex min-w-0 flex-col gap-[inherit] outline-none">
+        <div className="lesson-activity">
+          <h1 className="font-mono text-[10px] uppercase tracking-widest text-ink-dim">From pages to files</h1>
+          <TransferBoard state={state} />
+          {choicesVisible && <Choice options={OPTIONS[state.stage]} chosen={state.chosen} disabled={state.phase !== 'question'}
+            onChoose={(id) => send({ type: 'choose', id })} />}
+        </div>
         <Bubble key={`${state.stage}:${state.phase}:${state.chosen}`} lines={transferLines(state)} index={state.line}
           onNext={() => send({ type: 'next' })}
           onDone={state.phase === 'question' || state.phase === 'ending' ? undefined : () => send({ type: 'next' })}

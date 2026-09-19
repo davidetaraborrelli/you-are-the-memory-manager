@@ -6,13 +6,24 @@ export function LeakControls({ state, dispatch, onDone }: { state: LeakState; di
   // along on their own. Neither has a line, so both keep the one that sent
   // them off, and neither offers the button that belonged to it.
   const voice = useVoice(leakLines(state), state.error ? 0 : state.line, `${state.phase}:${state.step}:${state.error}`)
+  const doneLabel = state.phase === 'found' ? 'Rewind both runs' : state.phase === 'ready' ? 'Replay request 4'
+    : state.phase === 'explain' ? state.step < 8 ? `Replay request ${state.step + 1}` : 'Compare the costs'
+    : state.phase === 'account-ready' ? 'Review differing requests' : state.phase === 'summary' ? 'Continue' : 'Try the same test with LRU'
+  return <>
+    {voice.lines.length > 0 && <Bubble key={voice.key} lines={voice.lines} index={voice.index}
+      onNext={() => dispatch({ type: 'next' })}
+      onDone={voice.held || state.phase === 'search' ? undefined : state.phase === 'bridge' ? onDone : () => dispatch({ type: 'next' })}
+      doneLabel={doneLabel} />}
+    {canReplay(state) && <button type="button" onClick={() => dispatch({ type: 'replay' })} className="self-start border border-edge px-4 py-3 text-sm">Replay explanation</button>}
+  </>
+}
+
+/** Activity content shares the reserved area above the tutor. */
+export function LeakActivity({ state, dispatch }: { state: LeakState; dispatch: (action: LeakAction) => void }) {
   const running = state.phase === 'play' || state.phase === 'account'
   const accounting = ['account', 'summary', 'bridge'].includes(state.phase)
   const saved = DIFFERENCES.filter((row) => row.saved).length
   const added = DIFFERENCES.length - saved
-  const doneLabel = state.phase === 'found' ? 'Rewind both runs' : state.phase === 'ready' ? 'Replay request 4'
-    : state.phase === 'explain' ? state.step < 8 ? `Replay request ${state.step + 1}` : 'Compare the costs'
-    : state.phase === 'account-ready' ? 'Review differing requests' : state.phase === 'summary' ? 'Continue' : 'Try the same test with LRU'
   return <>
     {running && <div className="flex flex-wrap gap-3">
       <button type="button" className="border border-edge px-4 py-3 text-sm" onClick={() => dispatch({ type: 'pause' })}>{state.paused ? 'Play' : 'Pause'}</button>
@@ -28,10 +39,5 @@ export function LeakControls({ state, dispatch, onDone }: { state: LeakState; di
     </table>}
     {['summary', 'bridge'].includes(state.phase) && <p className="text-sm">{added} faults added − {saved} faults saved = {added - saved} extra fault</p>}
     {state.phase === 'bridge' && <p className="field-border-disabled p-4 text-sm">More frames causing more page faults is <strong>Belady's anomaly.</strong></p>}
-    {voice.lines.length > 0 && <Bubble key={voice.key} lines={voice.lines} index={voice.index}
-      onNext={() => dispatch({ type: 'next' })}
-      onDone={voice.held || state.phase === 'search' ? undefined : state.phase === 'bridge' ? onDone : () => dispatch({ type: 'next' })}
-      doneLabel={doneLabel} />}
-    {canReplay(state) && <button type="button" onClick={() => dispatch({ type: 'replay' })} className="self-start border border-edge px-4 py-3 text-sm">Replay explanation</button>}
   </>
 }

@@ -166,61 +166,63 @@ export function Act1({ onDone }: { onDone: () => void }) {
     <>
       <ProgressBar screen={screen} />
       <main className="mx-auto flex lesson-content max-w-2xl flex-col justify-center gap-6 px-5 py-12">
-        {/* The marker sits on the request being *dealt with*, not the one after
-            it: while a beat is speaking about a hit, the tape has to still be
-            showing that hit. When frozen for a decision it moves forward to the
-            request being decided, because you cannot choose blind about which
-            page is asking. */}
-        <div className={region('tape')}>
-        <Tape
-          tape={L1.ref}
-          cursor={game.awaiting ? game.awaiting.step - 1 : Math.max(0, game.cursor - 1)}
-          flashStep={last?.kind === 'hit' ? last.step : null}
-          lit={lit === 'tape'}
-          pulseMask={focus === 'mask'}
-        />
-        </div>
-
-        {/* Delayed regret. Without this line the counter is noise: it is the
-            only thing that ties a fault back to the choice that caused it. */}
-        {game.awaiting?.regret && (
-          <p className="text-sm text-fault">
-            You dropped this {game.awaiting.regret.stepsAgo}{' '}
-            {game.awaiting.regret.stepsAgo === 1 ? 'request' : 'requests'} ago.
-          </p>
-        )}
-
-        <div className={region('memory')}>
-          <Frames
-            frames={game.frames}
-            awaiting={speaking ? null : game.awaiting}
-            onChoose={choose}
-            regretPage={game.awaiting?.regret?.page ?? null}
-            lit={lit === 'memory'}
+        <div className="lesson-activity">
+          {/* The marker sits on the request being *dealt with*, not the one after
+              it: while a beat is speaking about a hit, the tape has to still be
+              showing that hit. When frozen for a decision it moves forward to the
+              request being decided, because you cannot choose blind about which
+              page is asking. */}
+          <div className={region('tape')}>
+          <Tape
+            tape={L1.ref}
+            cursor={game.awaiting ? game.awaiting.step - 1 : Math.max(0, game.cursor - 1)}
+            flashStep={last?.kind === 'hit' ? last.step : null}
+            lit={lit === 'tape'}
+            pulseMask={focus === 'mask'}
           />
-        </div>
+          </div>
 
-        <div className={`flex flex-wrap items-center justify-between gap-3 ${region('counter')}`}>
-          <SwappedOut pages={swappedOut(game)} />
-          <Counter faults={game.faults} named={named} lit={lit === 'counter'} />
-        </div>
-
-        {card && (
-          <section className="space-y-3 border-t border-edge pt-5 text-sm">
-            <p>
-              You finished with{' '}
-              <strong className="font-semibold">
-                {card.faults} {named ? 'page faults' : 'trips'}
-              </strong>{' '}
-              out of {card.requests} requests.
+          {/* Delayed regret. Without this line the counter is noise: it is the
+              only thing that ties a fault back to the choice that caused it. */}
+          {game.awaiting?.regret && (
+            <p className="text-sm text-fault">
+              You dropped this {game.awaiting.regret.stepsAgo}{' '}
+              {game.awaiting.regret.stepsAgo === 1 ? 'request' : 'requests'} ago.
             </p>
-            {card.credit.map((c) => (
-              <p key={c.page} className="text-hit">
-                Page {c.page}, dropped at step {c.step}. Never came back. Good call.
+          )}
+
+          <div className={region('memory')}>
+            <Frames
+              frames={game.frames}
+              awaiting={speaking ? null : game.awaiting}
+              onChoose={choose}
+              regretPage={game.awaiting?.regret?.page ?? null}
+              lit={lit === 'memory'}
+            />
+          </div>
+
+          <div className={`flex flex-wrap items-center justify-between gap-3 ${region('counter')}`}>
+            <SwappedOut pages={swappedOut(game)} />
+            <Counter faults={game.faults} named={named} lit={lit === 'counter'} />
+          </div>
+
+          {card && (
+            <section className="space-y-3 border-t border-edge pt-5 text-sm">
+              <p>
+                You finished with{' '}
+                <strong className="font-semibold">
+                  {card.faults} {named ? 'page faults' : 'trips'}
+                </strong>{' '}
+                out of {card.requests} requests.
               </p>
-            ))}
-          </section>
-        )}
+              {card.credit.map((c) => (
+                <p key={c.page} className="text-hit">
+                  Page {c.page}, dropped at step {c.step}. Never came back. Good call.
+                </p>
+              ))}
+            </section>
+          )}
+        </div>
 
         <div className="min-h-44">
           <Bubble

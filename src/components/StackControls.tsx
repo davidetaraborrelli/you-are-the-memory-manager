@@ -9,10 +9,21 @@ export function StackControls({ state, dispatch, onDone }: {
   // The check runs itself through the whole tape with nothing to add, so the
   // line that asked the learner to watch it stays up until it is over.
   const voice = useVoice(stackLines(state), state.line, state.phase)
-  const evidence = stackEvidence(state)
-  const results = stackResults(state)
   const doneLabel = state.phase === 'intro' ? 'Run the same test' : state.phase === 'feedback' ? 'Try again'
     : state.phase === 'explain' ? 'Compare the totals' : state.phase === 'result' ? 'Continue' : 'Try a different setting'
+  return <>
+    {voice.lines.length > 0 && <Bubble key={voice.key} lines={voice.lines} index={voice.index} onNext={() => dispatch({ type: 'next' })}
+      onDone={voice.held || state.phase === 'question' ? undefined : state.phase === 'bridge' ? onDone : () => dispatch({ type: 'next' })}
+      doneLabel={doneLabel} />}
+    {canReplayStack(state) && <button type="button" onClick={() => dispatch({ type: 'replay' })}
+      className="min-h-11 self-start border border-edge px-4 py-3 text-sm">Replay the check</button>}
+  </>
+}
+
+/** Activity content shares the reserved area above the tutor. */
+export function StackActivity({ state, dispatch }: { state: StackState; dispatch: (action: StackAction) => void }) {
+  const evidence = stackEvidence(state)
+  const results = stackResults(state)
   return <>
     {evidence && <div className="space-y-2 text-sm" role="status" aria-live="polite" aria-atomic="true">
       <p className="font-mono text-ink-dim">States checked: {evidence.checked} / {BELADY.length}</p>
@@ -37,10 +48,5 @@ export function StackControls({ state, dispatch, onDone }: {
         <td className="font-mono text-lg font-semibold">{row.lru}</td><td className="font-mono text-ink-dim">{row.opt}</td>
       </tr>)}</tbody>
     </table>}
-    {voice.lines.length > 0 && <Bubble key={voice.key} lines={voice.lines} index={voice.index} onNext={() => dispatch({ type: 'next' })}
-      onDone={voice.held || state.phase === 'question' ? undefined : state.phase === 'bridge' ? onDone : () => dispatch({ type: 'next' })}
-      doneLabel={doneLabel} />}
-    {canReplayStack(state) && <button type="button" onClick={() => dispatch({ type: 'replay' })}
-      className="min-h-11 self-start border border-edge px-4 py-3 text-sm">Replay the check</button>}
   </>
 }

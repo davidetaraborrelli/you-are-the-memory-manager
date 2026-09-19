@@ -220,56 +220,58 @@ export function Act2({
     <>
       <ProgressBar screen={screen} />
       <main className="mx-auto flex lesson-content max-w-2xl flex-col justify-center gap-6 px-5 py-12">
-        {showBoard && (
-          <>
-            <div className={region('tape')}>
-              <Tape
-                tape={L2.ref}
-                cursor={game.awaiting ? game.awaiting.step - 1 : Math.max(0, game.cursor - 1)}
-                flashStep={last?.kind === 'hit' ? last.step : null}
-                lit={lit === 'tape'}
-              />
-            </div>
+        <div className="lesson-activity">
+          {showBoard && (
+            <>
+              <div className={region('tape')}>
+                <Tape
+                  tape={L2.ref}
+                  cursor={game.awaiting ? game.awaiting.step - 1 : Math.max(0, game.cursor - 1)}
+                  flashStep={last?.kind === 'hit' ? last.step : null}
+                  lit={lit === 'tape'}
+                />
+              </div>
 
-            {game.awaiting?.regret && (
-              <p className="text-sm text-fault">
-                You dropped this {game.awaiting.regret.stepsAgo}{' '}
-                {game.awaiting.regret.stepsAgo === 1 ? 'request' : 'requests'} ago.
-              </p>
-            )}
+              {game.awaiting?.regret && (
+                <p className="text-sm text-fault">
+                  You dropped this {game.awaiting.regret.stepsAgo}{' '}
+                  {game.awaiting.regret.stepsAgo === 1 ? 'request' : 'requests'} ago.
+                </p>
+              )}
 
-            <div className={region('memory')}>
-              <Frames
-                frames={game.frames}
-                awaiting={speaking ? null : game.awaiting}
-                onChoose={choose}
-                regretPage={game.awaiting?.regret?.page ?? null}
-                stats={tileStats(game)}
-                lit={lit === 'memory'}
-              />
-            </div>
+              <div className={region('memory')}>
+                <Frames
+                  frames={game.frames}
+                  awaiting={speaking ? null : game.awaiting}
+                  onChoose={choose}
+                  regretPage={game.awaiting?.regret?.page ?? null}
+                  stats={tileStats(game)}
+                  lit={lit === 'memory'}
+                />
+              </div>
 
-            <div className={`flex flex-wrap items-center justify-between gap-3 ${region('counter')}`}>
-              <SwappedOut pages={swappedOut(game)} />
-              <Counter faults={game.faults} named lit={lit === 'counter'} />
-            </div>
+              <div className={`flex flex-wrap items-center justify-between gap-3 ${region('counter')}`}>
+                <SwappedOut pages={swappedOut(game)} />
+                <Counter faults={game.faults} named lit={lit === 'counter'} />
+              </div>
 
-            {/* The commitment, kept on screen for the whole run. The learner
-                agreed not to switch halfway; leaving what they agreed to off
-                the board would make that a memory test. */}
-            {phase === 'play' && testing && (
-              <p className="font-mono text-[10px] uppercase tracking-widest text-ink-faint">
-                testing: {testing}
-              </p>
-            )}
-          </>
-        )}
+              {/* The commitment, kept on screen for the whole run. The learner
+                  agreed not to switch halfway; leaving what they agreed to off
+                  the board would make that a memory test. */}
+              {phase === 'play' && testing && (
+                <p className="font-mono text-[10px] uppercase tracking-widest text-ink-faint">
+                  testing: {testing}
+                </p>
+              )}
+            </>
+          )}
 
-        {scoring && (
-          <section className="border-t border-edge pt-5">
-            <Scoreboard rows={phase === 'fork' ? forkRows() : ruleRows(rule)} />
-          </section>
-        )}
+          {scoring && (
+            <section className="border-t border-edge pt-5">
+              <Scoreboard rows={phase === 'fork' ? forkRows() : ruleRows(rule)} />
+            </section>
+          )}
+        </div>
 
         <div className="min-h-44">
           <Bubble

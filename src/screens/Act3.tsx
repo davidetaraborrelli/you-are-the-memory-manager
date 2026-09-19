@@ -315,45 +315,47 @@ export function Act3({ onDone }: { onDone: () => void }) {
     <>
       <ProgressBar screen={8} />
       <main className="mx-auto flex lesson-content max-w-2xl flex-col justify-center gap-6 px-5 py-12">
-        <div className={region('tape')}>
-          <Tape
-            tape={shown.level.ref}
-            cursor={
-              shown.g.awaiting ? shown.g.awaiting.step - 1 : Math.max(0, shown.g.cursor - 1)
-            }
-            reveal
-            fit={!scrolling}
-            markSteps={marks}
-            flashStep={scrolling && last?.kind === 'hit' ? last.step : null}
-            lit={lit === 'tape'}
-          />
-        </div>
-
-        <div className={region('memory')}>
-          <Frames
-            frames={shown.g.frames}
-            // Only a fork is ever offered, and only on the learner's own run.
-            // The fills resolve themselves, so the board asks for a tap exactly
-            // when there is a decision behind it.
-            awaiting={demo || speaking || confirm || !decision ? null : game.awaiting}
-            onChoose={choose}
-            lit={lit === 'memory'}
-          />
-        </div>
-
-        <div className={`flex flex-wrap items-center justify-between gap-3 ${region('counter')}`}>
-          <SwappedOut pages={swappedOut(shown.g)} />
-          <Counter faults={shown.g.faults} named lit={lit === 'counter'} />
-        </div>
-
-        {(card || scored || ruler) && (
-          <section className="border-t border-edge pt-5">
-            <Scoreboard
-              rows={ruler ? rulerRows() : (card ?? proofRows(2, game.faults))}
-              caption={ruler ? RULER_CAPTION : null}
+        <div className="lesson-activity">
+          <div className={region('tape')}>
+            <Tape
+              tape={shown.level.ref}
+              cursor={
+                shown.g.awaiting ? shown.g.awaiting.step - 1 : Math.max(0, shown.g.cursor - 1)
+              }
+              reveal
+              fit={!scrolling}
+              markSteps={marks}
+              flashStep={scrolling && last?.kind === 'hit' ? last.step : null}
+              lit={lit === 'tape'}
             />
-          </section>
-        )}
+          </div>
+
+          <div className={region('memory')}>
+            <Frames
+              frames={shown.g.frames}
+              // Only a fork is ever offered, and only on the learner's own run.
+              // The fills resolve themselves, so the board asks for a tap exactly
+              // when there is a decision behind it.
+              awaiting={demo || speaking || confirm || !decision ? null : game.awaiting}
+              onChoose={choose}
+              lit={lit === 'memory'}
+            />
+          </div>
+
+          <div className={`flex flex-wrap items-center justify-between gap-3 ${region('counter')}`}>
+            <SwappedOut pages={swappedOut(shown.g)} />
+            <Counter faults={shown.g.faults} named lit={lit === 'counter'} />
+          </div>
+
+          {(card || scored || ruler) && (
+            <section className="border-t border-edge pt-5">
+              <Scoreboard
+                rows={ruler ? rulerRows() : (card ?? proofRows(2, game.faults))}
+                caption={ruler ? RULER_CAPTION : null}
+              />
+            </section>
+          )}
+        </div>
 
         <div className="min-h-44">
           <Bubble

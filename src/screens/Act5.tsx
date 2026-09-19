@@ -158,44 +158,46 @@ export function Act5({ onDone }: { onDone: (reference: boolean) => void }) {
   return <>
     <ProgressBar screen={10} />
     <main className="mx-auto flex lesson-content max-w-3xl flex-col justify-center gap-6 px-5 py-10 sm:py-12">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-ink-dim">Make the cheap rule executable</p>
-      {phase === 'editor' && <>
-        {availability === 'runtime_unavailable' && <p className="field-border-disabled p-4 text-sm text-ink-dim" role="status">
-          Python isn't available here, so we'll walk through the reference rule. You can still watch every choice.
-        </p>}
-        <PythonScaffold fields={editor.fields} errors={editor.errors} hints={editor.hints}
-          disabled={busy} reference={reference}
-          onChange={(index, value) => {
-            setMachineState('neutral')
-            setEditor((e) => {
-              const fields = [...e.fields] as Blanks; fields[index] = value
-              const errors = [...e.errors]; errors[index] = null
-              return { ...e, fields, errors, message: null }
-            })
-          }}
-          onHint={() => setEditor((e) => ({ ...e, hints: Math.min(3, e.hints + 1) }))}
-          onAnswers={() => setEditor((e) => ({ ...e, fields: [...ANSWERS], errors: [null, null, null], message: null }))}
-        />
-        {editor.message && !editor.errors.some(Boolean) && <p role="alert" className="text-sm text-fault">{editor.message}</p>}
-        <div className="flex flex-wrap gap-3">
-          <button type="button" disabled={busy || (!reference && (runtimeFailed || editor.fields.some((v) => !v.trim())))}
-            onClick={() => { void run('quick') }} className="px-4 py-3 text-sm font-medium disabled:opacity-35">
-            {busy ? 'Running your rule…' : reference ? 'Continue with the reference rule' : 'Run my rule'}
-          </button>
-          {fallbackOffered && <button type="button" disabled={busy} onClick={useReference} className="border border-edge px-4 py-3 text-sm">Use the reference rule</button>}
-        </div>
-      </>}
-      {shownFrame && <CodePlayback frame={shownFrame} spec={phase === 'quick-intro' ? QUICK : spec} stage={phase === 'quick-intro' ? 'quick' : stage} reference={reference} />}
-      {phase === 'play' && <div className="flex flex-wrap items-center gap-3 text-sm">
-        <button type="button" onClick={() => setPaused((p) => !p)} className="min-h-11 border border-edge px-4 py-2">{paused ? 'Play' : 'Pause'}</button>
-        <button type="button" onClick={() => { setPaused(true); advanceFrame() }} className="min-h-11 border border-edge px-4 py-2">Next action</button>
-        {repair && <span className="text-ink-dim">Reference replay of this choice</span>}
-      </div>}
-      {phase === 'result' && <Scoreboard rows={[
-        { id: 'clock', label: reference ? 'reference rule' : 'your function', value: L3.scores.clock, emphasis: true },
-        { id: 'lru', label: 'LRU, exact recency', value: L3.scores.lru },
-        { id: 'opt', label: 'OPT, perfect future', value: L3.scores.opt },
-      ]} caption="Page faults on level three" />}
+      <div className={`lesson-activity ${phase === 'intro' ? 'lesson-activity--compact' : ''}`}>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-ink-dim">Make the cheap rule executable</p>
+        {phase === 'editor' && <>
+          {availability === 'runtime_unavailable' && <p className="field-border-disabled p-4 text-sm text-ink-dim" role="status">
+            Python isn't available here, so we'll walk through the reference rule. You can still watch every choice.
+          </p>}
+          <PythonScaffold fields={editor.fields} errors={editor.errors} hints={editor.hints}
+            disabled={busy} reference={reference}
+            onChange={(index, value) => {
+              setMachineState('neutral')
+              setEditor((e) => {
+                const fields = [...e.fields] as Blanks; fields[index] = value
+                const errors = [...e.errors]; errors[index] = null
+                return { ...e, fields, errors, message: null }
+              })
+            }}
+            onHint={() => setEditor((e) => ({ ...e, hints: Math.min(3, e.hints + 1) }))}
+            onAnswers={() => setEditor((e) => ({ ...e, fields: [...ANSWERS], errors: [null, null, null], message: null }))}
+          />
+          {editor.message && !editor.errors.some(Boolean) && <p role="alert" className="text-sm text-fault">{editor.message}</p>}
+          <div className="flex flex-wrap gap-3">
+            <button type="button" disabled={busy || (!reference && (runtimeFailed || editor.fields.some((v) => !v.trim())))}
+              onClick={() => { void run('quick') }} className="px-4 py-3 text-sm font-medium disabled:opacity-35">
+              {busy ? 'Running your rule…' : reference ? 'Continue with the reference rule' : 'Run my rule'}
+            </button>
+            {fallbackOffered && <button type="button" disabled={busy} onClick={useReference} className="border border-edge px-4 py-3 text-sm">Use the reference rule</button>}
+          </div>
+        </>}
+        {shownFrame && <CodePlayback frame={shownFrame} spec={phase === 'quick-intro' ? QUICK : spec} stage={phase === 'quick-intro' ? 'quick' : stage} reference={reference} />}
+        {phase === 'play' && <div className="flex flex-wrap items-center gap-3 text-sm">
+          <button type="button" onClick={() => setPaused((p) => !p)} className="min-h-11 border border-edge px-4 py-2">{paused ? 'Play' : 'Pause'}</button>
+          <button type="button" onClick={() => { setPaused(true); advanceFrame() }} className="min-h-11 border border-edge px-4 py-2">Next action</button>
+          {repair && <span className="text-ink-dim">Reference replay of this choice</span>}
+        </div>}
+        {phase === 'result' && <Scoreboard rows={[
+          { id: 'clock', label: reference ? 'reference rule' : 'your function', value: L3.scores.clock, emphasis: true },
+          { id: 'lru', label: 'LRU, exact recency', value: L3.scores.lru },
+          { id: 'opt', label: 'OPT, perfect future', value: L3.scores.opt },
+        ]} caption="Page faults on level three" />}
+      </div>
       {voice.lines.length > 0 && <Bubble key={voice.key} lines={voice.lines} index={voice.index} onNext={() => {
         if (phase === 'result' && line + 1 === lines.length - 1) setMachineState('neutral')
         setLine((i) => i + 1)
